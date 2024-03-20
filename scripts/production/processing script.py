@@ -138,9 +138,9 @@ def filter_clusters_by_gene(data, gene, threshold = 0.5):
     # Find clusters with significant EPCAM expression
     significant_clusters = []
     for cluster in de_results.columns:
-        epcam_gene = de_results[cluster].str.contains('EPCAM')
-        epcam_expression = adata.uns['rank_genes_groups']['logfoldchanges'][cluster][epcam_gene]
-        if any(epcam_expression >= expression_threshold):
+        gene_presence = de_results[cluster].str.contains(gene)
+        gene_expression = adata.uns['rank_genes_groups']['logfoldchanges'][cluster][gene_presence]
+        if any(gene_expression >= expression_threshold):
             significant_clusters.append(cluster)
     # Subset the data to include only cells from the significant clusters
     adata_subset = adata[adata.obs['leiden'].isin(significant_clusters)].copy()
