@@ -133,10 +133,10 @@ LGR5_threshold = 0.5
 diff_exp_method = 'wilcoxon'
 
 #%% reading the already processed files
-combined_proc = sc.read('C:/Work cache/py_projs/DGE messing around/project data cache/testing integration with separation and the stem cells part 2/saved files/combined_proc.h5ad')
-combined_nocol_proc = sc.read('C:/Work cache/py_projs/DGE messing around/project data cache/testing integration with separation and the stem cells part 2/saved files/combined_nocol_proc.h5ad')
-antrum_proc = sc.read('C:/Work cache/py_projs/DGE messing around/project data cache/testing integration with separation and the stem cells part 2/saved files/antrum_proc.h5ad')
-combined_control_proc = sc.read('C:/Work cache/py_projs/DGE messing around/project data cache/testing integration with separation and the stem cells part 2/saved files/combined_control_proc.h5ad')
+combined_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/combined_proc.h5ad')
+combined_nocol_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/combined_nocol_proc.h5ad')
+antrum_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/antrum_proc.h5ad')
+combined_control_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/combined_control_proc.h5ad')
 
 #%% Gating on epithelial cells in the fully-combined file
 combined_epithelium = filter_clusters_by_gene(data = combined_proc, gene = 'EPCAM')
@@ -423,8 +423,8 @@ for group in ['Gastric antrum', 'Metaplastic antrum']:
 control_ant = dataframes['Gastric antrum']
 metaplastic_ant = dataframes['Metaplastic antrum']
 
-control_ant.to_csv('C:/Work cache/py_projs/DGE messing around/project data cache/testing integration with separation and the stem cells part 2/saved files/control_ant.csv')
-metaplastic_ant.to_csv('C:/Work cache/py_projs/DGE messing around/project data cache/testing integration with separation and the stem cells part 2/saved files/metaplastic_ant.csv')
+control_ant.to_csv('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/control_ant.csv')
+metaplastic_ant.to_csv('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/metaplastic_ant.csv')
 
 #%% Extracting the barcodes of the filtered cells so we can retrieve their raw values
 

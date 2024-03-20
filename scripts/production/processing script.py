@@ -178,10 +178,10 @@ antrum_proc = process_for_UMAP(ant_unfilt, leiden_res = global_res)
 combined_control_proc = process_for_UMAP(combined_control, leiden_res = global_res)
 
 #%% Write files to save then load in the next script
-combined_proc.write_h5ad(filename = 'C:/Work cache/py_projs/DGE messing around/project data cache/testing integration with separation and the stem cells part 2/saved files/combined_proc.h5ad')
-combined_nocol_proc.write_h5ad(filename = 'C:/Work cache/py_projs/DGE messing around/project data cache/testing integration with separation and the stem cells part 2/saved files/combined_nocol_proc.h5ad')
-antrum_proc.write_h5ad(filename = 'C:/Work cache/py_projs/DGE messing around/project data cache/testing integration with separation and the stem cells part 2/saved files/antrum_proc.h5ad')
-combined_control_proc.write_h5ad(filename = 'C:/Work cache/py_projs/DGE messing around/project data cache/testing integration with separation and the stem cells part 2/saved files/combined_control_proc.h5ad')
+combined_proc.write_h5ad(filename = 'C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/combined_proc.h5ad')
+combined_nocol_proc.write_h5ad(filename = 'C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/combined_nocol_proc.h5ad')
+antrum_proc.write_h5ad(filename = 'C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/antrum_proc.h5ad')
+combined_control_proc.write_h5ad(filename = 'C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/combined_control_proc.h5ad')
 
 #%% Printing the bookend
 # =============================================================================
