@@ -1,0 +1,4 @@
+AnnData object with n_obs × n_vars = 5756 × 98
+    obs: 'sample_id', 'SampleID', 'Patient', 'Biopsies', 'Site', 'Inflammation', 'Age', 'Sex', 'doublet_scores', 'predicted_doublets', 'n_genes_by_counts', 'total_counts', 'total_counts_mt', 'pct_counts_mt', 'total_counts_rp', 'pct_counts_rp', 'total_counts_hb', 'pct_counts_hb', 'total_counts_ig', 'pct_counts_ig', 'S_score', 'G2M_score', 'phase', 'cellbarcode', 'n_counts', 'n_genes', 'leiden'
+    uns: 'sample_id_colors', 'log1p', 'hvg', 'pca', 'tsne', 'neighbors', 'umap', 'leiden', 'leiden_colors', 'rank_genes_groups'
+    obsm: 'X_pca', 'X_tsne', 'X_umap', 'ora_estimate', 'ora_pvals'
