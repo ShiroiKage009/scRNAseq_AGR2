@@ -15,14 +15,10 @@ def filter_cells_for_UMAP(data, min_ct = 2000, min_gen = 700, min_cell = 10, mt_
     sc.pp.filter_genes(adata, min_cells = min_cell) # Filter genes based on the minimum number of cells expressing it
     adata_prefilt = adata[adata.obs['predicted_doublets'] == False]
     if not normed:
-        adata_filt = adata_prefilt[adata_prefilt.obs['pct_counts_mt'] < mt_pct] # Filter on the cells with fewer than 10% mitochondrial reads
+        adata_filt = adata_prefilt[adata_prefilt.obs['pct_counts_mt'] < mt_pct] # Filtering based on percentage of mitochondrial genes
     else:
         adata_filt = adata_prefilt
     return adata_filt    
-#######################################################
-################## FUNCTION DEF END ###################
-#######################################################
-
 
 def process_for_UMAP(data, normed = 0, leiden_res = 0.8, filtering = 1, min_ct = 2000, min_gen = 700, min_cell = 10, mt_pct = 50):
     adata = data # This is to avoid writing into the file that's entered as an argument
@@ -170,6 +166,8 @@ combined_nocol = ad.concat([ant_unfilt, duo_unfilt], join = 'outer')
 combined_nocol.obs['Localization'] = combined_nocol.obs['Site'].astype(str) + ' ' + combined_nocol.obs['Patient'].astype(str)
 ant_unfilt.obs['Localization'] = ant_unfilt.obs['Site'].astype(str) + ' ' + ant_unfilt.obs['Patient'].astype(str)
 combined_control = combined_unique[combined_unique.obs['Patient'] == 'GI6253', :] # Using the unique object seems to work for filtering while usign the combined object directly doesn't. No idea why.
+combined_control.obs['Localization'] = combined_control.obs['Site'].astype(str) + ' ' + combined_control.obs['Patient'].astype(str)
+
 
 #%% Initial processing the UMAP
 combined_proc = process_for_UMAP(combined, leiden_res = global_res)

@@ -127,7 +127,7 @@ def filter_clusters_by_gene(data, gene, threshold = 0.5):
 sc.settings.verbosity = 3
 sc.set_figure_params(dpi = 600)
 
-inspect_stem = ['LGR5', 'MKI67', 'TNFRSF19', 'BMI1', 'LRIG1', 'leiden', 'Localization']
+inspect_stem = ['LGR5', 'MKI67', 'TNFRSF19', 'BMI1', 'LRIG1', 'presence', 'leiden', 'Localization']
 global_res = 0.5
 LGR5_threshold = 0.5
 diff_exp_method = 'wilcoxon'
@@ -464,10 +464,44 @@ sc.pl.umap(antrum_refilt_proc, color = ['LGR5', 'leiden', 'Localization'], size 
 sc.tl.rank_genes_groups(antrum_refilt_proc, groupby='leiden', method = 'wilcoxon')
 sc.pl.rank_genes_groups(antrum_refilt_proc, n_genes=25)
 
-
 # For nocol
 nocol_refilt_proc = process_for_UMAP(nocol_unfilt_subset, leiden_res = 0.1)
 nocol_refilt_proc.obs['Localization'] = nocol_refilt_proc.obs['Site'].astype(str) + ' ' + nocol_refilt_proc.obs['Patient'].astype(str)
 sc.pl.umap(nocol_refilt_proc, color = ['LGR5', 'leiden', 'Localization'], size = 40)
 
 #%% Testing cell
+# Currently testing taking the barcodes from the cells I gated on then getting 
+antrum_ep_LGR5_barcodes = antrum_ep_LGR5.obs_names.tolist()
+ant_annot = sc.read('C:/Work cache/Project sync/PhD/Research projects/AGR2 follow-up/Data cache/ssRNAseq/Aline/Data annotation/antrum/antrum_annotated_final1122.h5ad')
+antrum_annot_LGR5 = ant_annot[antrum_ep_LGR5_barcodes].copy()
+antrum_annot_LGR5.obs['Localization'] = antrum_annot_LGR5.obs['Site'].astype(str) + ' ' + antrum_annot_LGR5.obs['Patient'].astype(str)
+
+antrum_LGR5_calc = process_for_UMAP(antrum_annot_LGR5, leiden_res = global_res)
+sc.pl.umap(antrum_LGR5_calc, color = inspect_stem, size = 200)
+
+#%% Test cell part 2
+import numpy as np
+
+# Assuming antrum_ep_LGR5_barcodes is a list of barcode strings you want to check.
+# ant_annot is your AnnData object containing your annotated data.
+
+# Step 1: Check which barcodes are present
+barcodes_present = np.isin(antrum_ep_LGR5_barcodes, ant_annot.obs_names)
+
+# Step 2: Count matching and non-matching barcodes
+num_present = np.sum(barcodes_present)
+num_absent = len(antrum_ep_LGR5_barcodes) - num_present
+
+# Print results
+print(f"Number of barcodes present in ant_annot: {num_present}")
+print(f"Number of barcodes absent from ant_annot: {num_absent}")
+
+#%% Testing cell part 3
+
+# Step 1: Check which barcodes from `antrum_ep_LGR5` are present in `ant_annot`
+presence_in_ant_annot = [barcode in ant_annot.obs_names for barcode in antrum_ep_LGR5.obs_names]
+
+# Step 2: Add this information as a new column in `antrum_ep_LGR5.obs`
+antrum_ep_LGR5.obs['presence'] = antrum_ep_LGR5.obs['presence'].astype('category')
+
+sc.pl.umap(antrum_ep_LGR5, color = ['presence', 'Localization'])
