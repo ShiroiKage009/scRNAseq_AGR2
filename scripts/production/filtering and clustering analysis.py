@@ -7,7 +7,7 @@ import scanpy as sc
 import anndata as ad
 import pandas as pd
 
-#%% function definitions
+#_cell_break_replace_with_%%_to_restore_cells function definitions
 def process_for_UMAP(data, normed = 0, leiden_res = 0.8):
     adata = data.copy() # This is to avoid writing into the file that's entered as an argument
     print("################# Filtering ... #################")
@@ -123,35 +123,35 @@ def filter_clusters_by_gene(data, gene, threshold = 0.5):
     return adata_subset
 
 
-#%% Environment settings and misc variables
+#_cell_break_replace_with_%%_to_restore_cells Environment settings and misc variables
 sc.settings.verbosity = 3
 sc.set_figure_params(dpi = 600)
 
-inspect_stem = ['LGR5', 'MKI67', 'TNFRSF19', 'BMI1', 'LRIG1', 'presence', 'leiden', 'Localization']
+inspect_stem = ['LGR5', 'MKI67', 'TNFRSF19', 'BMI1', 'LRIG1', 'leiden', 'Localization']
 global_res = 0.5
 LGR5_threshold = 0.5
 diff_exp_method = 'wilcoxon'
 
-#%% reading the already processed files
+#_cell_break_replace_with_%%_to_restore_cells reading the already processed files
 combined_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/combined_proc.h5ad')
 combined_nocol_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/combined_nocol_proc.h5ad')
 antrum_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/antrum_proc.h5ad')
 combined_control_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/combined_control_proc.h5ad')
 
-#%% Gating on epithelial cells in the fully-combined file
+#_cell_break_replace_with_%%_to_restore_cells Gating on epithelial cells in the fully-combined file
 combined_epithelium = filter_clusters_by_gene(data = combined_proc, gene = 'EPCAM')
 antrum_epithelium = filter_clusters_by_gene(data = antrum_proc, gene = 'EPCAM')
 nocol_epithelium = filter_clusters_by_gene(data = combined_nocol_proc, gene = 'EPCAM')
 combined_control_epithelium = filter_clusters_by_gene(data = combined_control_proc, gene = 'EPCAM')
 
-#%% QC check plots
+#_cell_break_replace_with_%%_to_restore_cells QC check plots
 sc.pl.umap(combined_epithelium, color = ['leiden', 'Localization'], title = 'combined_epithelium QC')
 sc.pl.umap(antrum_epithelium, color = ['leiden', 'Localization'], title = 'combined_epithelium QC')
 sc.pl.umap(nocol_epithelium, color = ['leiden', 'Localization'], title = 'combined_epithelium QC')
 sc.pl.umap(combined_control_epithelium, color = ['leiden', 'Localization'], title = 'combined_epithelium QC')
 
 
-#%% Relabeling Localization
+#_cell_break_replace_with_%%_to_restore_cells Relabeling Localization
 # Preparing the index 
 localization_mapping = {
     'Antrum GI6253' : 'Control Antrum',
@@ -187,7 +187,7 @@ combined_control_epithelium.obs['Localization'] = combined_control_epithelium.ob
 print(combined_control_epithelium.obs['Localization'])
 print(combined_control_epithelium.obs['Localization_old'])
 
-#%% Filtering and combining the LGR5 and MKI67 cells from all the different epithelial combinations
+#_cell_break_replace_with_%%_to_restore_cells Filtering and combining the LGR5 and MKI67 cells from all the different epithelial combinations
 # Filtering combined
 combined_ep_LGR5 = isolate_cells_by_gene(data = combined_epithelium, gene = 'LGR5', threshold = LGR5_threshold)
 combined_ep_MKI67 = isolate_cells_by_gene(data = combined_epithelium, gene = 'MKI67', threshold = 0.5)
@@ -213,7 +213,7 @@ combined_control_nu_LGR5MKI67 = ad.concat([combined_control_ep_LGR5, combined_co
 combined_control_LGR5MKI67 = combined_control_nu_LGR5MKI67[~combined_control_nu_LGR5MKI67.obs['cellbarcode'].duplicated(keep = 'first')].copy()
 
 
-#%% Recalculating UMAPs of the different combinations
+#_cell_break_replace_with_%%_to_restore_cells Recalculating UMAPs of the different combinations
 combined_LGR5_recalc = recalc_UMAP(data = combined_ep_LGR5, leiden_res = 0.1)
 combined_MKI67_recalc = recalc_UMAP(data = combined_ep_MKI67, leiden_res = 0.1)
 
@@ -237,7 +237,7 @@ print("####   END OF PROCESSING. START MESSING AROUND WITH ANALYSIS.     ####")
 print("######################################################################")
 # =============================================================================
 
-#%% Plotting the UMAPs from above to check
+#_cell_break_replace_with_%%_to_restore_cells Plotting the UMAPs from above to check
 sc.pl.umap(combined_LGR5_recalc, color = inspect_stem, size = 15, title = 'combined LGR5')
 sc.pl.umap(combined_MKI67_recalc, color = inspect_stem, size = 10, title = 'combined MKI67')
 
@@ -255,7 +255,7 @@ sc.pl.umap(antrum_LGR5MKI67_recalc, color = inspect_stem, size = 60, title = 'LG
 sc.pl.umap(nocol_LGR5MKI67_recalc, color = inspect_stem, size = 10, title = 'LGR5/nocol prolif')
 sc.pl.tsne(nocol_LGR5MKI67_recalc, color = inspect_stem, size = 10, title = 'LGR5/nocol prolif')
 
-#%% Inspecting the clusters vs localization to check
+#_cell_break_replace_with_%%_to_restore_cells Inspecting the clusters vs localization to check
 sc.pl.umap(combined_LGR5_recalc, color = ['leiden', 'Localization'], size = 15, title = 'combined LGR5')
 sc.pl.umap(combined_MKI67_recalc, color = ['leiden', 'Localization'], size = 5, title = 'combined MKI67')
 
@@ -274,7 +274,7 @@ sc.pl.umap(nocol_LGR5MKI67_recalc, color = ['leiden', 'Localization'], size = 10
 sc.pl.umap(combined_control_LGR5MKI67_recalc, color = ['leiden', 'Localization'], size = 5, title = 'LGR5/combined_control prolif')
 
 
-#%% mapping for antrum LGR5 
+#_cell_break_replace_with_%%_to_restore_cells mapping for antrum LGR5 
 sc.pl.umap(antrum_LGR5_recalc, color = ['leiden'], size = 70, title = 'antrum LGR5')
 sc.pl.umap(antrum_LGR5_recalc, color = ['Localization'], size = 70, title = 'antrum LGR5')
 
@@ -318,7 +318,7 @@ sc.pl.tsne(antrum_LGR5_recalc, color = ['CLDN15', 'SLC39A5', 'EPHB2', 'CLDN7', '
 sc.pl.tsne(antrum_LGR5_recalc, color = ['CLDN15', 'SLC39A5', 'EPHB2', 'CLDN7', 'CLDN3', 'MUC3A', 'AQP1', 'LGR5'], size = 200)
 
 
-#%% mapping for combined MKI67 
+#_cell_break_replace_with_%%_to_restore_cells mapping for combined MKI67 
 sc.pl.umap(combined_MKI67_recalc, color = ['leiden'], size = 5, title = 'combined MKI67')
 sc.pl.umap(combined_MKI67_recalc, color = ['Localization'], size = 5, title = 'combined MKI67')
 
@@ -343,7 +343,7 @@ sc.pl.umap(combined_MKI67_recalc, color = ['leiden'], size = 7, title = 'MKI67+ 
 sc.pl.umap(combined_MKI67_recalc, color = ['Localization'], size = 7, title = 'MKI67+ cells')
 sc.pl.violin(combined_MKI67_recalc, keys = 'HSPA5', groupby = 'Localization', rotation = 90)
 
-#%% mapping for combined LGR5 
+#_cell_break_replace_with_%%_to_restore_cells mapping for combined LGR5 
 sc.pl.umap(combined_LGR5_recalc, color = ['leiden'], size = 15, title = 'combined LGR5')
 sc.pl.umap(combined_LGR5_recalc, color = ['Localization'], size = 15, title = 'combined LGR5')
 
@@ -368,7 +368,7 @@ print(combined_LGR5_recalc.obs.head())
 sc.pl.umap(combined_LGR5_recalc, color = ['leiden', 'Localization'], size = 30, title = 'LGR5+ cells')
 sc.pl.umap(combined_LGR5_recalc, color = ['Localization'], size = 30, title = 'LGR5+ cells')
 
-#%% test cells
+#_cell_break_replace_with_%%_to_restore_cells test cells
 sc.pl.umap(combined_LGR5MKI67_recalc, color = ['HSPA5', 'MKI67', 'LGR5', 'leiden', 'Localization'], size = 5)
 separated_combo = combined_LGR5MKI67_recalc[combined_LGR5MKI67_recalc.obs['Patient'] == 'P26'].copy()
 separated_combo_2 = combined_LGR5MKI67_recalc[combined_LGR5MKI67_recalc.obs['Patient'] == 'GI6253'].copy()
@@ -385,7 +385,7 @@ sc.pl.scatter(combined_LGR5MKI67_recalc, x = 'LGR5', y = 'HSPA5', size = 90, col
 
 print(separated_combo.obs['Localization'])
 
-#%% Test cell 2
+#_cell_break_replace_with_%%_to_restore_cells Test cell 2
 
 sc.pl.umap(combined_LGR5MKI67_recalc, color = ['MKI67', 'LGR5', 'leiden', 'Localization'])
 indices_of_interest = combined_LGR5MKI67_recalc.obs[combined_LGR5MKI67_recalc.obs['Patient'] == 'P26'].index.copy()
@@ -393,7 +393,7 @@ sep = combined_LGR5MKI67_recalc[indices_of_interest]
 sc.pl.umap(sep, color = ['MKI67', 'LGR5', 'leiden', 'Localization'])
 
 
-#%% Writing the files for volcano plot in R. This is specifically for antrum_LGR5_recalc
+#_cell_break_replace_with_%%_to_restore_cells Writing the files for volcano plot in R. This is specifically for antrum_LGR5_recalc
 # Extract the relevant arrays
 gene_names = antrum_LGR5_recalc.uns['rank_genes_groups']['names']
 logfoldchanges = antrum_LGR5_recalc.uns['rank_genes_groups']['logfoldchanges']
@@ -426,7 +426,7 @@ metaplastic_ant = dataframes['Metaplastic antrum']
 control_ant.to_csv('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/control_ant.csv')
 metaplastic_ant.to_csv('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/metaplastic_ant.csv')
 
-#%% Extracting the barcodes of the filtered cells so we can retrieve their raw values
+#_cell_break_replace_with_%%_to_restore_cells Extracting the barcodes of the filtered cells so we can retrieve their raw values
 
 # Start by reading the barcodes
 antrum_LGR5_barcodes = antrum_LGR5_recalc.obs_names.tolist()
@@ -445,7 +445,7 @@ antrum_unfilt_subset = ant_unfilt[antrum_LGR5_barcodes].copy()
 combined_unfilt_subset = combined_unfilt[combined_LGR5_barcodes].copy()
 nocol_unfilt_subset = nocol_unfilt[nocol_LGR5_barcodes].copy()
 
-#%% Processing and plotting the filtered stuff from raw instead of all the resdone stuff
+#_cell_break_replace_with_%%_to_restore_cells Processing and plotting the filtered stuff from raw instead of all the resdone stuff
 # For the combined
 combined_refilt_proc = process_for_UMAP(combined_unfilt_subset, leiden_res = 0.1)
 combined_refilt_proc.obs['Localization'] = combined_refilt_proc.obs['Site'].astype(str) + ' ' + combined_refilt_proc.obs['Patient'].astype(str)
@@ -471,37 +471,44 @@ sc.pl.umap(nocol_refilt_proc, color = ['LGR5', 'leiden', 'Localization'], size =
 
 #%% Testing cell
 # Currently testing taking the barcodes from the cells I gated on then getting 
-antrum_ep_LGR5_barcodes = antrum_ep_LGR5.obs_names.tolist()
-ant_annot = sc.read('C:/Work cache/Project sync/PhD/Research projects/AGR2 follow-up/Data cache/ssRNAseq/Aline/Data annotation/antrum/antrum_annotated_final1122.h5ad')
-antrum_annot_LGR5 = ant_annot[antrum_ep_LGR5_barcodes].copy()
-antrum_annot_LGR5.obs['Localization'] = antrum_annot_LGR5.obs['Site'].astype(str) + ' ' + antrum_annot_LGR5.obs['Patient'].astype(str)
+combined_ep_LGR5_barcodes = combined_ep_LGR5.obs_names.tolist()
+combined_annot = sc.read('C:/Work cache/Project sync/PhD/Research projects/AGR2 follow-up/Data cache/ssRNAseq/Aline/Data annotation/Epithelium_all_locations/data_all_locations_epithelium_0223.h5ad')
+combined_annot_LGR5 = combined_annot[combined_ep_LGR5_barcodes].copy() # The non-existent barcodes in the annotated dataset will cause an error here
+combined_annot_LGR5.obs['Localization'] = combined_annot_LGR5.obs['Site'].astype(str) + ' ' + combined_annot_LGR5.obs['Patient'].astype(str)
 
-antrum_LGR5_calc = process_for_UMAP(antrum_annot_LGR5, leiden_res = global_res)
+antrum_LGR5_calc = process_for_UMAP(combined_annot_LGR5, leiden_res = global_res)
 sc.pl.umap(antrum_LGR5_calc, color = inspect_stem, size = 200)
 
-#%% Test cell part 2
+#_cell_break_replace_with_%%_to_restore_cells Test cell part 2
 import numpy as np
 
-# Assuming antrum_ep_LGR5_barcodes is a list of barcode strings you want to check.
-# ant_annot is your AnnData object containing your annotated data.
+# Assuming combined_ep_LGR5_barcodes is a list of barcode strings you want to check.
+# combined_annot is your AnnData object containing your annotated data.
 
 # Step 1: Check which barcodes are present
-barcodes_present = np.isin(antrum_ep_LGR5_barcodes, ant_annot.obs_names)
+barcodes_present = np.isin(combined_ep_LGR5_barcodes, combined_annot.obs_names)
 
 # Step 2: Count matching and non-matching barcodes
 num_present = np.sum(barcodes_present)
-num_absent = len(antrum_ep_LGR5_barcodes) - num_present
+num_absent = len(combined_ep_LGR5_barcodes) - num_present
 
 # Print results
-print(f"Number of barcodes present in ant_annot: {num_present}")
-print(f"Number of barcodes absent from ant_annot: {num_absent}")
+print(f"Number of barcodes present in combined_annot: {num_present}")
+print(f"Number of barcodes absent from combined_annot: {num_absent}")
 
 #%% Testing cell part 3
 
-# Step 1: Check which barcodes from `antrum_ep_LGR5` are present in `ant_annot`
-presence_in_ant_annot = [barcode in ant_annot.obs_names for barcode in antrum_ep_LGR5.obs_names]
+# Issue right now is that the cells retrieved are too few to do DGE for clustering
+# Step 1: Check which barcodes from `combined_ep_LGR5` are present in `combined_annot`
+presence_in_combined_annot = [barcode in combined_annot.obs_names for barcode in combined_ep_LGR5.obs_names]
+combined_ep_LGR5.obs['presence'] = presence_in_combined_annot
 
-# Step 2: Add this information as a new column in `antrum_ep_LGR5.obs`
-antrum_ep_LGR5.obs['presence'] = antrum_ep_LGR5.obs['presence'].astype('category')
+# Step 2: Add this information as a new column in `combined_ep_LGR5.obs`
+combined_ep_LGR5.obs['presence'] = combined_ep_LGR5.obs['presence'].astype('category')
+sc.pl.umap(combined_ep_LGR5, color = ['presence', 'Localization'])
 
-sc.pl.umap(antrum_ep_LGR5, color = ['presence', 'Localization'])
+combined_ep_LGR5_present = combined_ep_LGR5[combined_ep_LGR5.obs['presence'] == True].copy()
+present_LGR5_barcodes = combined_ep_LGR5_present.obs_names.tolist()
+present_isolation = ant_unfilt[present_LGR5_barcodes].copy()
+present_isolation_proc = process_for_UMAP(present_isolation)
+sc.pl.umap(present_isolation_proc, color = ['leiden', 'Patient'])
