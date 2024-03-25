@@ -124,7 +124,7 @@ def filter_clusters_by_gene(data, gene, threshold = 0.5):
 #%% Setting up environmental variables
 sc.settings.verbosity = 3
 sc.set_figure_params(dpi = 600)
-inspect_stem = ['LGR5', 'MKI67', 'TNFRSF19', 'BMI1', 'LRIG1', 'leiden', 'Patient']
+inspect_stem = ['LGR5', 'MKI67', 'TNFRSF19', 'BMI1', 'LRIG1', 'Patient']
 global_res = 0.5
 LGR5_threshold = 0.5
 diff_exp_method = 'wilcoxon'
@@ -136,6 +136,7 @@ antrum_annot = sc.read('C:/Work cache/Project sync/PhD/Research projects/AGR2 fo
 sc.pl.umap(antrum_annot, color = inspect_stem)
 antrum_annot_LGR5 = isolate_cells_by_gene(data = antrum_annot, gene = 'LGR5', threshold = 0.5)
 sc.pl.umap(antrum_annot_LGR5, color = 'Patient', size = 120)
+print(antrum_annot.obs['Patient'].value_counts())
 
 #%% Isolate the LGR5 cells by barcode from the raw file
 antrum_annot_LGR5_barcodes = antrum_annot_LGR5.obs_names.tolist()

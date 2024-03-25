@@ -236,7 +236,17 @@ print("######################################################################")
 print("####   END OF PROCESSING. START MESSING AROUND WITH ANALYSIS.     ####")
 print("######################################################################")
 # =============================================================================
-
+#%% Checking all the different QC metrics in obs post processing just to make sure things are proper
+checking = ['Biopsies', 'Inflammation', 'pct_counts_mt', 'pct_counts_rp', 'pct_counts_hb', 'n_genes', 'doublet_scores', 'Localization']
+str(combined_epithelium)
+sc.pl.umap(combined_LGR5_recalc, color = checking) 
+sc.pl.umap(antrum_LGR5_recalc, color = checking) 
+sc.pl.umap(combined_epithelium, color = checking)
+sc.pl.umap(combined_epithelium, color = checking)
+sc.pl.umap(nocol_epithelium, color = 'Localization', size = 10)
+print(antrum_epithelium.obs['Patient'].value_counts())
+ 
+#%%
 #_cell_break_replace_with_%%_to_restore_cells Plotting the UMAPs from above to check
 sc.pl.umap(combined_LGR5_recalc, color = inspect_stem, size = 15, title = 'combined LGR5')
 sc.pl.umap(combined_MKI67_recalc, color = inspect_stem, size = 10, title = 'combined MKI67')
@@ -482,13 +492,13 @@ sc.pl.umap(antrum_LGR5_calc, color = inspect_stem, size = 200)
 #_cell_break_replace_with_%%_to_restore_cells Test cell part 2
 import numpy as np
 
-# Assuming combined_ep_LGR5_barcodes is a list of barcode strings you want to check.
+# Assuming combined_ep_LGR5_barcodes is a list of barcode strings to check.
 # combined_annot is your AnnData object containing your annotated data.
 
-# Step 1: Check which barcodes are present
+# Check which barcodes are present
 barcodes_present = np.isin(combined_ep_LGR5_barcodes, combined_annot.obs_names)
 
-# Step 2: Count matching and non-matching barcodes
+# Count matching and non-matching barcodes
 num_present = np.sum(barcodes_present)
 num_absent = len(combined_ep_LGR5_barcodes) - num_present
 
@@ -512,3 +522,50 @@ present_LGR5_barcodes = combined_ep_LGR5_present.obs_names.tolist()
 present_isolation = ant_unfilt[present_LGR5_barcodes].copy()
 present_isolation_proc = process_for_UMAP(present_isolation)
 sc.pl.umap(present_isolation_proc, color = ['leiden', 'Patient'])
+
+#%% Additional testing for those included and excluded from the annotated files.
+
+#%% Testing cell
+# Currently testing taking the barcodes from the cells I gated on then getting 
+nocol_epithelium_barcodes = nocol_epithelium.obs_names.tolist()
+combined_annot = sc.read('C:/Work cache/Project sync/PhD/Research projects/AGR2 follow-up/Data cache/ssRNAseq/Aline/Data annotation/Epithelium_all_locations/data_all_locations_epithelium_0223.h5ad')
+combined_annot_LGR5 = combined_annot[nocol_epithelium_barcodes].copy() # The non-existent barcodes in the annotated dataset will cause an error here
+combined_annot_LGR5.obs['Localization'] = combined_annot_LGR5.obs['Site'].astype(str) + ' ' + combined_annot_LGR5.obs['Patient'].astype(str)
+
+antrum_LGR5_calc = process_for_UMAP(combined_annot_LGR5, leiden_res = global_res)
+sc.pl.umap(antrum_LGR5_calc, color = inspect_stem, size = 200)
+
+#_cell_break_replace_with_%%_to_restore_cells Test cell part 2
+import numpy as np
+
+# Assuming nocol_epithelium_barcodes is a list of barcode strings to check.
+# combined_annot is your AnnData object containing your annotated data.
+
+# Check which barcodes are present
+barcodes_present = np.isin(nocol_epithelium_barcodes, combined_annot.obs_names)
+
+# Count matching and non-matching barcodes
+num_present = np.sum(barcodes_present)
+num_absent = len(nocol_epithelium_barcodes) - num_present
+
+# Print results
+print(f"Number of barcodes present in combined_annot: {num_present}")
+print(f"Number of barcodes absent from combined_annot: {num_absent}")
+
+#%% Testing cell part 3
+checking = ['Biopsies', 'Inflammation', 'pct_counts_mt', 'pct_counts_rp', 'pct_counts_hb', 'n_genes', 'doublet_scores', 'Localization']
+# Issue right now is that the cells retrieved are too few to do DGE for clustering
+# Step 1: Check which barcodes from `nocol_epithelium` are present in `combined_annot`
+presence_in_combined_annot = [barcode in combined_annot.obs_names for barcode in nocol_epithelium.obs_names]
+nocol_epithelium.obs['presence'] = presence_in_combined_annot
+
+# Step 2: Add this information as a new column in `nocol_epithelium.obs`
+nocol_epithelium.obs['presence'] = nocol_epithelium.obs['presence'].astype('category')
+sc.pl.umap(nocol_epithelium, color = ['presence', 'Localization'], size = 3)
+
+nocol_epithelium_present = nocol_epithelium[nocol_epithelium.obs['presence'] == True].copy()
+present_LGR5_barcodes = nocol_epithelium_present.obs_names.tolist()
+present_isolation = ant_unfilt[present_LGR5_barcodes].copy()
+present_isolation_proc = process_for_UMAP(present_isolation)
+sc.pl.umap(present_isolation_proc, color = ['leiden', 'Patient'])
+sc.pl.umap(combined_epithelium, color = checking)
