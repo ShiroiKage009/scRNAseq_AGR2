@@ -7,7 +7,7 @@ import anndata as ad
 import pandas as pd
 
 #%% function definitions
-def filter_cells_for_UMAP(data, min_ct = 2000, min_gen = 700, min_cell = 10, mt_pct = 50, normed = 0):
+def filter_cells_for_UMAP(data, min_ct = 2000, min_gen = 700, min_cell = 10, mt_pct = 50, normed = 0): # DEFAULT QC VALUES
     adata = data # This is to avoid writing into the file that's entered as an argument
     print("################# Filtering ... #################")
     sc.pp.filter_cells(adata, min_counts = min_ct) # Filter cells based on number of RNA reads
@@ -20,7 +20,7 @@ def filter_cells_for_UMAP(data, min_ct = 2000, min_gen = 700, min_cell = 10, mt_
         adata_filt = adata_prefilt
     return adata_filt    
 
-def process_for_UMAP(data, normed = 0, leiden_res = 0.8, filtering = 1, min_ct = 2000, min_gen = 700, min_cell = 10, mt_pct = 50):
+def process_for_UMAP(data, normed = 0, leiden_res = 0.8, filtering = 1, min_ct = 2000, min_gen = 700, min_cell = 10, mt_pct = 50): # DEFAULT QC VALUES
     adata = data # This is to avoid writing into the file that's entered as an argument
     if filtering:
         adata_filt = filter_cells_for_UMAP(data = adata, min_ct = min_ct, min_gen = min_gen, min_cell = min_cell, mt_pct = mt_pct)
@@ -89,7 +89,7 @@ def recalc_UMAP(data_filt, leiden_res = 0.8):
 #######################################################
 
 
-def process_until_norm(data, cells, min_ct = 2000, min_gen = 700, min_cell = 10, mt_pct = 50):
+def process_until_norm(data, cells, min_ct = 2000, min_gen = 700, min_cell = 10, mt_pct = 50): # DEFAULT QC VALUES
     adata = data # This is to avoid writing into the file that's entered as an argument
     print("################# Filtering ... #################")
     sc.pp.filter_cells(adata, min_counts = min_ct) # Filter cells based on number of RNA reads
