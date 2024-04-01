@@ -7,23 +7,24 @@ import anndata as ad
 import pandas as pd
 
 #%% function definitions
-def filter_cells_for_UMAP(data, min_ct = 2000, min_gen = 700, min_cell = 10, mt_pct = 50, normed = 0): # DEFAULT QC VALUES
+def filter_cells_for_UMAP(data, min_ct = 2000, min_gen = 500, min_cell = 3, mt_pct = 50, max_genes = 8000, normed = 0): # DEFAULT QC VALUES
     adata = data # This is to avoid writing into the file that's entered as an argument
     print("################# Filtering ... #################")
     sc.pp.filter_cells(adata, min_counts = min_ct) # Filter cells based on number of RNA reads
     sc.pp.filter_cells(adata, min_genes= min_gen) # Filter cells based on the number of recognized genes
     sc.pp.filter_genes(adata, min_cells = min_cell) # Filter genes based on the minimum number of cells expressing it
     adata_prefilt = adata[adata.obs['predicted_doublets'] == False]
+    adata_prefilt = adata_prefilt[adata_prefilt.obs['n_genes_by_counts'] < max_genes]
     if not normed:
         adata_filt = adata_prefilt[adata_prefilt.obs['pct_counts_mt'] < mt_pct] # Filtering based on percentage of mitochondrial genes
     else:
         adata_filt = adata_prefilt
     return adata_filt    
 
-def process_for_UMAP(data, normed = 0, leiden_res = 0.8, filtering = 1, min_ct = 2000, min_gen = 700, min_cell = 10, mt_pct = 50): # DEFAULT QC VALUES
+def process_for_UMAP(data, normed = 0, leiden_res = 0.8, filtering = 1, min_ct = 2000, min_gen = 500, min_cell = 3, mt_pct = 50, max_genes = 8000): # DEFAULT QC VALUES
     adata = data # This is to avoid writing into the file that's entered as an argument
     if filtering:
-        adata_filt = filter_cells_for_UMAP(data = adata, min_ct = min_ct, min_gen = min_gen, min_cell = min_cell, mt_pct = mt_pct)
+        adata_filt = filter_cells_for_UMAP(data = adata, min_ct = min_ct, min_gen = min_gen, min_cell = min_cell, max_genes = max_genes, mt_pct = mt_pct)
     else:
         adata_filt = adata       
     print("################# Normalizing ... #################")
@@ -89,13 +90,14 @@ def recalc_UMAP(data_filt, leiden_res = 0.8):
 #######################################################
 
 
-def process_until_norm(data, cells, min_ct = 2000, min_gen = 700, min_cell = 10, mt_pct = 50): # DEFAULT QC VALUES
+def process_until_norm(data, cells, min_ct = 2000, min_gen = 500, min_cell = 3, mt_pct = 50, max_genes = 8000): # DEFAULT QC VALUES
     adata = data # This is to avoid writing into the file that's entered as an argument
     print("################# Filtering ... #################")
     sc.pp.filter_cells(adata, min_counts = min_ct) # Filter cells based on number of RNA reads
     sc.pp.filter_cells(adata, min_genes= min_gen) # Filter cells based on the number of recognized genes
     sc.pp.filter_genes(adata, min_cells = min_cell) # Filter genes based on the minimum number of cells expressing it
     adata_prefilt = adata[adata.obs['predicted_doublets'] == False]
+    adata_prefilt = adata_prefilt[adata_prefilt.obs['n_genes_by_counts'] < max_genes]
     adata_filt = adata_prefilt[adata_prefilt.obs['pct_counts_mt'] < mt_pct] # Filter on the cells with fewer than 10% mitochondrial reads
     print("################# Normalizing ... #################")
     sc.pp.normalize_total(adata_filt, target_sum=1e4) # Normalize

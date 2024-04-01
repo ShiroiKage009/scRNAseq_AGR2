@@ -11,10 +11,11 @@ import pandas as pd
 def process_for_UMAP(data, normed = 0, leiden_res = 0.8):
     adata = data.copy() # This is to avoid writing into the file that's entered as an argument
     print("################# Filtering ... #################")
-    sc.pp.filter_cells(adata, min_counts = 2000) # Filter cells based on number of RNA reads
-    sc.pp.filter_cells(adata, min_genes= 700) # Filter cells based on the number of recognized genes
-    sc.pp.filter_genes(adata, min_cells = 10) # Filter genes based on the minimum number of cells expressing it
+    sc.pp.filter_cells(adata, min_counts = 2000) # Filter cells based on minimum number of RNA reads
+    sc.pp.filter_cells(adata, min_genes= 500) # Filter cells based on the number of recognized genes
+    sc.pp.filter_genes(adata, min_cells = 3) # Filter genes based on the minimum number of cells expressing it
     adata_prefilt = adata[adata.obs['predicted_doublets'] == False]
+    adata_prefilt = adata_prefilt[adata_prefilt.obs['n_genes_by_counts'] < 8000]
     if not normed:
         adata_filt = adata_prefilt[adata_prefilt.obs['pct_counts_mt'] < 50] # Filter on the cells with fewer than 10% mitochondrial reads
     else:
@@ -78,10 +79,11 @@ def process_until_norm(data, cells):
     adata = data.copy() # This is to avoid writing into the file that's entered as an argument
     print("################# Filtering ... #################")
     sc.pp.filter_cells(adata, min_counts = 2000) # Filter cells based on number of RNA reads
-    sc.pp.filter_cells(adata, min_genes= 700) # Filter cells based on the number of recognized genes
-    sc.pp.filter_genes(adata, min_cells = 10) # Filter genes based on the minimum number of cells expressing it
+    sc.pp.filter_cells(adata, min_genes= 500) # Filter cells based on the number of recognized genes
+    sc.pp.filter_genes(adata, min_cells = 3) # Filter genes based on the minimum number of cells expressing it
     adata_prefilt = adata[adata.obs['predicted_doublets'] == False]
     adata_filt = adata_prefilt[adata_prefilt.obs['pct_counts_mt'] < 50] # Filter on the cells with fewer than 10% mitochondrial reads
+    adata_prefilt = adata_prefilt[adata_prefilt.obs['n_genes_by_counts'] < 8000]
     print("################# Normalizing ... #################")
     sc.pp.normalize_total(adata_filt, target_sum=1e4) # Normalize
     print("################# Log scaling ... #################")
