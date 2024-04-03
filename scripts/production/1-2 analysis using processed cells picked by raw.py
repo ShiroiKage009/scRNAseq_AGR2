@@ -1,25 +1,33 @@
-# This script tries to isolate the LGR5 cells and get their barcodes from the annotated and QC'ed files.
-# "filtering and clustering analysis.py" has a test cell with identifying cells from raw on my own then retrieving the 
-# cells from the annotated files and reclustering.
+# This script is for poking around in the files filtered 
+# and downstream analyses
 
-#%% Library imports
+# Import packages
 import scanpy as sc
+import anndata as ad
 import pandas as pd
 
 #%% function definitions
-# The QC values used here are the same as script 0-0
-def process_for_UMAP(data, normed = 0, leiden_res = 0.8):
-    adata = data.copy() # This is to avoid writing into the file that's entered as an argument
+# DEFAULT QC VALUES. Calibrated to Sarah Teichmann's paper "Cells of the human intestinal tract mapped across space and time." These QC values will apply by default for this entire script.
+def filter_cells_for_UMAP(data, min_ct = 2000, min_gen = 200, min_cell = 3, mt_pct = 50, max_genes = 8000, normed = 0): 
+    adata = data # This is to avoid writing into the file that's entered as an argument
     print("################# Filtering ... #################")
-    sc.pp.filter_cells(adata, min_counts = 2000) # Filter cells based on number of RNA reads
-    sc.pp.filter_cells(adata, min_genes= 500) # Filter cells based on the number of recognized genes
-    sc.pp.filter_genes(adata, min_cells = 3) # Filter genes based on the minimum number of cells expressing it
+    sc.pp.filter_cells(adata, min_counts = min_ct) # Filter cells based on number of RNA reads
+    sc.pp.filter_cells(adata, min_genes= min_gen) # Filter cells based on the number of recognized genes
+    sc.pp.filter_genes(adata, min_cells = min_cell) # Filter genes based on the minimum number of cells expressing it
     adata_prefilt = adata[adata.obs['predicted_doublets'] == False]
-    adata_prefilt = adata_prefilt[adata_prefilt.obs['n_genes_by_counts'] < 8000]
+    adata_prefilt = adata_prefilt[adata_prefilt.obs['n_genes_by_counts'] < max_genes]
     if not normed:
-        adata_filt = adata_prefilt[adata_prefilt.obs['pct_counts_mt'] < 50] # Filter on the cells with fewer than 10% mitochondrial reads
+        adata_filt = adata_prefilt[adata_prefilt.obs['pct_counts_mt'] < mt_pct] # Filtering based on percentage of mitochondrial genes
     else:
         adata_filt = adata_prefilt
+    return adata_filt    
+
+def process_for_UMAP(data, normed = 0, leiden_res = 0.8, filtering = 1, min_ct = 2000, min_gen = 200, min_cell = 3, mt_pct = 50, max_genes = 8000): # DEFAULT QC VALUES
+    adata = data # This is to avoid writing into the file that's entered as an argument
+    if filtering:
+        adata_filt = filter_cells_for_UMAP(data = adata, min_ct = min_ct, min_gen = min_gen, min_cell = min_cell, max_genes = max_genes, mt_pct = mt_pct)
+    else:
+        adata_filt = adata       
     print("################# Normalizing ... #################")
     sc.pp.normalize_total(adata_filt, target_sum=1e4) # Normalize
     print("################# Log scaling ... #################")
@@ -37,69 +45,82 @@ def process_for_UMAP(data, normed = 0, leiden_res = 0.8):
     print("################# Calculating PCA ... #################")
     sc.tl.pca(adata_filt, svd_solver='arpack') # Compute PCA
     print("################# Calculating tSNE ... #################")
-    sc.tl.tsne(adata_filt)
+    sc.tl.tsne(adata_filt) # Calculate tsne
     print("################# Calculating neighbors ... #################")
-    sc.pp.neighbors(adata_filt)
+    sc.pp.neighbors(adata_filt) # Calculate neighbors
     print("################# Calculating Leiden ... #################")
-    sc.tl.leiden(adata_filt, resolution = leiden_res)
+    sc.tl.leiden(adata_filt, resolution = leiden_res) # Calculate Leiden clusters
     print("################# Calculating PAGA ... #################")
-    sc.tl.paga(adata_filt)
+    sc.tl.paga(adata_filt) # Calculate PAGA
     print("################# Plotting PAGA ... #################")
     sc.pl.paga(adata_filt, plot = 1)  # remove `plot=False` if you want to see the coarse-grained graph
     print("################# Calculating UMAP init_pos = paga #################")
-    sc.tl.umap(adata_filt, init_pos='paga')
+    sc.tl.umap(adata_filt, init_pos='paga') # Plot PAGA
     print("################# Calculating UMAP ... #################")
-    sc.tl.umap(adata_filt)
+    sc.tl.umap(adata_filt) # Calculate UMAP
     print("#################Plotting UMAP ... #################")
-    sc.pl.umap(adata_filt, color = ['leiden'])
+    sc.pl.umap(adata_filt, color = ['leiden']) # Plot UMAP and show Leiden clusters
     return adata_filt
+#######################################################
+################## FUNCTION DEF END ###################
+#######################################################
 
-def recalc_UMAP(data, leiden_res = 0.8):
-    adata_filt = data
+
+def recalc_UMAP(data_filt, leiden_res = 0.8):
+    adata_filt = data_filt
     sc.tl.pca(adata_filt, svd_solver='arpack') # Compute PCA
     print("################# Calculating tSNE ... #################")
-    sc.tl.tsne(adata_filt)
+    sc.tl.tsne(adata_filt) # Calculate tsne
     print("################# Calculating neighbors ... #################")
-    sc.pp.neighbors(adata_filt)
+    sc.pp.neighbors(adata_filt) # Calculate neighbors
     print("################# Calculating Leiden ... #################")
-    sc.tl.leiden(adata_filt, resolution = leiden_res)
+    sc.tl.leiden(adata_filt, resolution = leiden_res) # Calculate Leiden clusters
     print("################# Calculating PAGA ... #################")
-    sc.tl.paga(adata_filt)
+    sc.tl.paga(adata_filt) # Calculate PAGA
     print("################# Plotting PAGA ... #################")
     sc.pl.paga(adata_filt, plot = 1)  # remove `plot=False` if you want to see the coarse-grained graph
     print("################# Calculating UMAP init_pos = paga#################")
-    sc.tl.umap(adata_filt, init_pos='paga')
+    sc.tl.umap(adata_filt, init_pos='paga') # Calculate PAGA
     print("################# Calculating UMAP ... #################")
-    sc.tl.umap(adata_filt)
+    sc.tl.umap(adata_filt) # Calculate UMAP
     print("################# Plotting UMAP ... #################")
-    sc.pl.umap(adata_filt, color = ['leiden'])
+    sc.pl.umap(adata_filt, color = ['leiden']) # Plot UMAP and show Leiden clusters
     return adata_filt
+#######################################################
+################## FUNCTION DEF END ###################
+#######################################################
 
-def process_until_norm(data, cells):
-    adata = data.copy() # This is to avoid writing into the file that's entered as an argument
+
+def process_until_norm(data, cells, min_ct = 2000, min_gen = 200, min_cell = 3, mt_pct = 50, max_genes = 8000): # DEFAULT QC VALUES
+    adata = data # This is to avoid writing into the file that's entered as an argument
     print("################# Filtering ... #################")
-    sc.pp.filter_cells(adata, min_counts = 2000) # Filter cells based on number of RNA reads
-    sc.pp.filter_cells(adata, min_genes= 500) # Filter cells based on the number of recognized genes
-    sc.pp.filter_genes(adata, min_cells = 3) # Filter genes based on the minimum number of cells expressing it
+    sc.pp.filter_cells(adata, min_counts = min_ct) # Filter cells based on number of RNA reads
+    sc.pp.filter_cells(adata, min_genes= min_gen) # Filter cells based on the number of recognized genes
+    sc.pp.filter_genes(adata, min_cells = min_cell) # Filter genes based on the minimum number of cells expressing it
     adata_prefilt = adata[adata.obs['predicted_doublets'] == False]
-    adata_prefilt = adata_prefilt[adata_prefilt.obs['n_genes_by_counts'] < 8000]
-    adata_filt = adata_prefilt[adata_prefilt.obs['pct_counts_mt'] < 50] # Filter on the cells with fewer than 10% mitochondrial reads
+    adata_prefilt = adata_prefilt[adata_prefilt.obs['n_genes_by_counts'] < max_genes]
+    adata_filt = adata_prefilt[adata_prefilt.obs['pct_counts_mt'] < mt_pct] # Filter on the cells with fewer than 10% mitochondrial reads
     print("################# Normalizing ... #################")
     sc.pp.normalize_total(adata_filt, target_sum=1e4) # Normalize
     print("################# Log scaling ... #################")
     sc.pp.log1p(adata_filt) # Log scaling
-    print("################# Finding variable genes ... #################")
+    print("#################Finding variable genes ... #################")
     sc.pp.highly_variable_genes(adata_filt, min_mean = 0.0125, max_mean = 3, min_disp = 0.5) # Compute differentially expressed genes within the sample
     print("################# Saving raw data ... #################")
     adata_filt.raw = adata_filt # Store the raw files in its own layer
     return adata_filt
+#######################################################
+################## FUNCTION DEF END ###################
+#######################################################
     
 
 def isolate_cells_by_gene(data, gene, threshold):
     # Now subset_ant_mt_filt contains only the highly variable genes
     data_subset = data[data[:, gene].X > threshold]
-    
     return data_subset
+#######################################################
+################## FUNCTION DEF END ###################
+#######################################################
 
 # This function filters the leiden clusters that are positivefor the gene you specify
 # It assumes that you already did the differential expression analysis. 
@@ -107,8 +128,8 @@ def isolate_cells_by_gene(data, gene, threshold):
 # threshold is the threshold of expression
 def filter_clusters_by_gene(data, gene, threshold = 0.5):
     # Load your AnnData object
-    adata = data.copy()
-    sc.tl.rank_genes_groups(adata, groupby='leiden', method = 'wilcoxon')
+    adata = data
+    sc.tl.rank_genes_groups(adata, groupby='leiden')
     # Extract the DataFrame for the differential expression results
     de_results = pd.DataFrame(adata.uns['rank_genes_groups']['names'])
     # Define a threshold for significant expression (adjust as needed)
@@ -132,21 +153,16 @@ global_res = 0.5
 LGR5_threshold = 0.5
 diff_exp_method = 'wilcoxon'
 
-#%% Reading the files
-antrum_annot = sc.read('C:/Work cache/Project sync/PhD/Research projects/AGR2 follow-up/Data cache/ssRNAseq/Aline/Data annotation/antrum/antrum_annotated_final1122.h5ad')
+#%% Readin the files
+# Writing the refiltered and processed files
+combined_refilt_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/refiltering from raw and reprocessing/combined_refilt_proc.h5ad')
+antrum_refilt_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/refiltering from raw and reprocessing/antrum_refilt_proc.h5ad')
+combined_LGR5_refilt_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/refiltering from raw and reprocessing/combined_LGR5_refilt_proc.h5ad')
+antrum_LGR5_refilt_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/refiltering from raw and reprocessing/antrum_LGR5_refilt_proc.h5ad')
+nocol_LGR5_refilt_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/refiltering from raw and reprocessing/nocol_LGR5_refilt_proc.h5ad')
+nocol_refilt_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/refiltering from raw and reprocessing/nocol_refilt_proc.h5ad')
 
-#%% Plotting for QC
-sc.pl.umap(antrum_annot, color = inspect_stem)
-antrum_annot_LGR5 = isolate_cells_by_gene(data = antrum_annot, gene = 'LGR5', threshold = 0.5)
-sc.pl.umap(antrum_annot_LGR5, color = 'Patient', size = 120)
-print(antrum_annot.obs['Patient'].value_counts())
+#%%
 
-#%% Isolate the LGR5 cells by barcode from the raw file
-antrum_annot_LGR5_barcodes = antrum_annot_LGR5.obs_names.tolist()
-ant_unfilt = sc.read("C:/Work cache/Project sync/PhD/Research projects/AGR2 follow-up/Data cache/ssRNAseq/Aline/raw_data/agr2_unfilt_antrum.h5ad")
-antrum_unfilt_LGR5 = ant_unfilt[antrum_annot_LGR5_barcodes].copy()
-
-#%% Process and plot the isolated cells
-antrum_LGR5_calc = process_for_UMAP(antrum_unfilt_LGR5, leiden_res = global_res)
-sc.pl.umap(antrum_LGR5_calc, color = inspect_stem)
-
+sc.pl.umap(combined_refilt_proc, color = ['n_genes_by_counts', 'Localization'])
+sc.pl.violin(combined_refilt_proc, groupby = 'Localization', keys = 'n_genes_by_counts')
