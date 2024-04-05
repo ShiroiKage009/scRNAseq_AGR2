@@ -48,7 +48,7 @@ plot_volcano <- function(df, x_axis, pval_col, highlight_gene = NULL, top_n = 0,
 }
 
 # Example of use:
-library(ggplot2)
-library(ggrepel)
-metaplastic_ant = read.csv(file = "C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/metaplastic_ant.csv", row.names = 1)
-plot_volcano(df = metaplastic_ant, x_axis = "Log.Fold.Change", pval_col = "Adjusted.P.Value", highlight_gene = 'AQP1', top_n = 40, plot_title = "Metaplastic antrum")
+# library(ggplot2)
+# library(ggrepel)
+# metaplastic_ant = read.csv(file = "C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/metaplastic_ant.csv", row.names = 1)
+# plot_volcano(df = metaplastic_ant, x_axis = "Log.Fold.Change", pval_col = "Adjusted.P.Value", highlight_gene = 'AQP1', top_n = 40, plot_title = "Metaplastic LGR5+ cells vs Gastric LGR5+ cells (Wilcoxon)")

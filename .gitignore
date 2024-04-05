@@ -16,3 +16,9 @@ project data cache/refiltering from raw and reprocessing/combined_refilt_proc.h5
 project data cache/refiltering from raw and reprocessing/combined_LGR5_refilt_proc.h5ad
 project data cache/refiltering from raw and reprocessing/antrum_refilt_proc.h5ad
 project data cache/refiltering from raw and reprocessing/antrum_LGR5_refilt_proc.h5ad
+project data cache/refiltering from raw and reprocessing/antrum_LGR5_unfilt_subset.h5ad
+project data cache/refiltering from raw and reprocessing/antrum_unfilt_subset.h5ad
+project data cache/refiltering from raw and reprocessing/combined_LGR5_unfilt_subset.h5ad
+project data cache/refiltering from raw and reprocessing/combined_unfilt_subset.h5ad
+project data cache/refiltering from raw and reprocessing/nocol_LGR5_unfilt_subset.h5ad
+project data cache/refiltering from raw and reprocessing/nocol_unfilt_subset.h5ad
