@@ -25,7 +25,8 @@ plot_volcano(df = cont_LGR5,
              x_axis = "Log.Fold.Change", 
              pval_col = "Adjusted.P.Value", 
              top_n = 160, 
-             plot_title = "Gated Control LGR5 cluster vs rest (Wilcoxon)")
+             plot_title = "Gated Control LGR5 cluster vs rest (Wilcoxon)",
+             highlight_gene = 'HSPA5')
 
 plot_volcano(df = enterocytes, 
              x_axis = "Log.Fold.Change", 
@@ -43,7 +44,8 @@ plot_volcano(df = cont_LGR5_procant,
              x_axis = "Log.Fold.Change", 
              pval_col = "Adjusted.P.Value", 
              top_n = 160, 
-             plot_title = "Control LGR5 cluster vs rest (Wilcoxon)")
+             plot_title = "Control LGR5 cluster vs rest (Wilcoxon)",
+             highlight_gene = 'HSPA5')
 
 plot_volcano(df = enterocytes_procant, 
              x_axis = "Log.Fold.Change", 

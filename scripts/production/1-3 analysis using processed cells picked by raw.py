@@ -173,8 +173,8 @@ nocol_refilt_subset = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data
 #%%
 
 processed_antrum = antrum_subset.copy()
-processed_antrum = process_for_UMAP(processed_antrum)
-sc.pl.umap(processed_antrum, color = ['LGR5', 'ANPEP', 'MUC5AC', 'MUC2', 'MUC6', 'GKN2', 'MKI67', 'SMOC2', 'GHRL', 'TFF1', 'GAST', 'CCKBR', 'CHGA', 'Patient', 'leiden'], size = 10)
+processed_antrum = process_for_UMAP(processed_antrum, leiden_res = 0.5)
+sc.pl.umap(processed_antrum, color = ['LGR5', 'ANPEP', 'MUC5AC', 'MUC2', 'MUC6', 'GKN2', 'MKI67', 'SMOC2', 'GHRL', 'TFF1', 'TFF2', 'GAST', 'CCKBR', 'CHGA', 'leiden', 'Patient'], size = 10)
 sc.tl.rank_genes_groups(adata = processed_antrum, groupby = 'leiden')
 sc.pl.rank_genes_groups(processed_antrum, n_genes = 25)
 
