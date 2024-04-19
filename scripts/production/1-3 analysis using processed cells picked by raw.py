@@ -222,6 +222,10 @@ sc.pl.rank_genes_groups(entero_LGR5, n_genes = 25)
 sc.pp.highly_variable_genes(processed_antrum, min_mean = 0.0125, max_mean = 3, min_disp = 0.5)
 sc.tl.rank_genes_groups(adata = processed_antrum, groupby = 'leiden', method = 'wilcoxon')
 
+#%%
+sc.pl.umap(processed_antrum, color = ['SERPINH1', 'MUC6', 'ARF4', 'MUC5AC', 'TFE3', 'Patient', 'leiden'])
+
+sc.pl.violin(adata = processed_antrum, keys = 'ARF4', groupby = 'Patient', rotation = 90)
 
 #%%
 # Extract the relevant arrays

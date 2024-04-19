@@ -1,4 +1,4 @@
-# This script is for poking around in the files filtered 
+# This script is meant for the processing of different files into a format that's ready for filtering by expression
 # and downstream analyses
 
 # Import packages
@@ -6,7 +6,7 @@ import scanpy as sc
 import anndata as ad
 import pandas as pd
 
-#cellbreak function definitions
+#%% function definitions
 # DEFAULT QC VALUES. Calibrated to Sarah Teichmann's paper "Cells of the human intestinal tract mapped across space and time." These QC values will apply by default for this entire script.
 def filter_cells_for_UMAP(data, min_ct = 2000, min_gen = 200, min_cell = 3, mt_pct = 50, max_genes = 8000, normed = 0): 
     adata = data # This is to avoid writing into the file that's entered as an argument
@@ -15,7 +15,9 @@ def filter_cells_for_UMAP(data, min_ct = 2000, min_gen = 200, min_cell = 3, mt_p
     sc.pp.filter_cells(adata, min_genes= min_gen) # Filter cells based on the number of recognized genes
     sc.pp.filter_genes(adata, min_cells = min_cell) # Filter genes based on the minimum number of cells expressing it
     adata_prefilt = adata[adata.obs['predicted_doublets'] == False]
-    #adata_prefilt = adata_prefilt[adata_prefilt.obs['n_genes_by_counts'] < max_genes]
+    if max_genes > 0:
+        adata_prefilt = adata_prefilt[adata_prefilt.obs['n_genes_by_counts'] < max_genes]
+        
     if not normed:
         adata_filt = adata_prefilt[adata_prefilt.obs['pct_counts_mt'] < mt_pct] # Filtering based on percentage of mitochondrial genes
     else:
@@ -98,7 +100,8 @@ def process_until_norm(data, cells, min_ct = 2000, min_gen = 200, min_cell = 3, 
     sc.pp.filter_cells(adata, min_genes= min_gen) # Filter cells based on the number of recognized genes
     sc.pp.filter_genes(adata, min_cells = min_cell) # Filter genes based on the minimum number of cells expressing it
     adata_prefilt = adata[adata.obs['predicted_doublets'] == False]
-    #adata_prefilt = adata_prefilt[adata_prefilt.obs['n_genes_by_counts'] < max_genes]
+    if max_genes > 0:
+        adata_prefilt = adata_prefilt[adata_prefilt.obs['n_genes_by_counts'] < max_genes]
     adata_filt = adata_prefilt[adata_prefilt.obs['pct_counts_mt'] < mt_pct] # Filter on the cells with fewer than 10% mitochondrial reads
     print("################# Normalizing ... #################")
     sc.pp.normalize_total(adata_filt, target_sum=1e4) # Normalize
@@ -152,63 +155,45 @@ def map_to_column(data, map_set, column = 'Localization'):
     print(data.obs[column + '_old'])
     return 'Mapping function done'
 
-
-#cellbreak Setting up environmental variables
+#%% Environment settings and misc variables
 sc.settings.verbosity = 3
 sc.set_figure_params(dpi = 600)
-inspect_stem = ['LGR5', 'MKI67', 'TNFRSF19', 'BMI1', 'LRIG1', 'Patient']
-global_res = 0.5
-LGR5_threshold = 0.5
-diff_exp_method = 'wilcoxon'
 
-#cellbreak Readin the files
-# Writing the refiltered and processed files
-combined_refilt_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/refiltering from raw and reprocessing/combined_refilt_proc.h5ad')
-antrum_refilt_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/refiltering from raw and reprocessing/antrum_refilt_proc.h5ad')
-combined_LGR5_refilt_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/refiltering from raw and reprocessing/combined_LGR5_refilt_proc.h5ad')
-antrum_LGR5_refilt_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/refiltering from raw and reprocessing/antrum_LGR5_refilt_proc.h5ad')
-nocol_LGR5_refilt_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/refiltering from raw and reprocessing/nocol_LGR5_refilt_proc.h5ad')
-nocol_refilt_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/refiltering from raw and reprocessing/nocol_refilt_proc.h5ad')
+# MIK67 = Ki67, TNSFRSF19 = TROY
+inspect_stem = ['LGR5', 'MKI67', 'TNFRSF19', 'BMI1', 'LRIG1', 'AGR2', 'HSPA5', 'leiden', 'Localization']
+global_res = 0.5
+#%%
+
+ant_unfilt = sc.read("C:/Work cache/Project sync/PhD/Research projects/AGR2 follow-up/Data cache/ssRNAseq/Aline/raw_data/agr2_unfilt_antrum.h5ad")
+
+patient_ant = ant_unfilt[ant_unfilt.obs['Patient'] == 'P26']
+
+patient_ant_filt = process_for_UMAP(patient_ant)
+patient_epith = filter_clusters_by_gene(data = patient_ant_filt, gene = 'EPCAM', threshold = 0.5)
+patient_epith_barcodes = patient_epith.obs_names.tolist()
+gated_unproc = ant_unfilt[patient_epith_barcodes]
+gated_proc = process_for_UMAP(data = gated_unproc, leiden_res = 0.5)
+
+#%%
+sc.pl.umap(gated_proc, color = ['TPSAB1', 'MUC5AC', 'MUC6', 'MUC2', 'ANPEP', 'LGR5', 'MKI67', 'AGR2', 'HSPA5', 'GHRL', 'leiden'])
+sc.pl.umap(patient_ant_filt, color = ['EPCAM', 'THY1', 'leiden'])
+sc.tl.rank_genes_groups(adata = gated_proc, groupby = 'leiden', method = 'wilcoxon')
+sc.pl.rank_genes_groups(gated_proc, n_genes = 25)
+
+clusters_mapping = {
+    '0' : 'Eterocytes',
+    '1' : 'GHRL enteroendocrine',
+    '2' : 'LGR5+ stem cells',
+    '3' : '3',
+    '4' : 'Prolif 1',
+    '5' : 'ECL cells',
+    '6' : 'Gastric SMC and GMC',
+    '7' : '7',
+    '8' : '8'
+        }
+
+map_to_column(data = gated_proc, map_set = clusters_mapping, column = 'leiden')
 
 #%%
 
-leiden_map = {
-    '0' : 'Metaplastic antrum',
-    '1' : 'Control antrum'}
-
-map_to_column(data = antrum_LGR5_refilt_proc, map_set = leiden_map, column = 'leiden')
-# Calculate diff exp ranking
-sc.tl.rank_genes_groups(adata = antrum_LGR5_refilt_proc, groupby = 'leiden', method = 'wilcoxon')
-sc.pl.rank_genes_groups(adata = antrum_LGR5_refilt_proc, groupby = 'leiden')
-
-# Extract the relevant arrays
-gene_names = antrum_LGR5_refilt_proc.uns['rank_genes_groups']['names']
-logfoldchanges = antrum_LGR5_refilt_proc.uns['rank_genes_groups']['logfoldchanges']
-pvals_adj = antrum_LGR5_refilt_proc.uns['rank_genes_groups']['pvals_adj']
-
-# Since you have two groups, you can loop or manually index each group
-# Assuming group names are '0' and '1', adjust accordingly
-
-dataframes = {}
-for group in ['Metaplastic antrum', 'Gastric antrum']:
-    # Extract information for each group
-    names = gene_names[group]
-    lfc = logfoldchanges[group]
-    pval_adj = pvals_adj[group]
-
-    # Create DataFrame
-    df = pd.DataFrame({
-        'Gene Names': names,
-        'Log Fold Change': lfc,
-        'Adjusted P-Value': pval_adj
-    }).set_index('Gene Names')
-
-    dataframes[group] = df
-
-# Now you have two DataFrames in the `dataframes` dict, one for each group
-# Access them like this:
-control_ant = dataframes['Gastric antrum']
-metaplastic_ant = dataframes['Metaplastic antrum']
-
-control_ant.to_csv('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/control_ant.csv')
-metaplastic_ant.to_csv('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/metaplastic_ant.csv')
+sc.pl.umap(gated_proc, color = ['SERPINH1', 'MUC6', 'ARF4', 'leiden'])

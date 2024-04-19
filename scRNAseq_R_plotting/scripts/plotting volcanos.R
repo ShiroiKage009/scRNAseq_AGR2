@@ -52,3 +52,12 @@ plot_volcano(df = enterocytes_procant,
              pval_col = "Adjusted.P.Value", 
              top_n = 160, 
              plot_title = "Metaplastic Enterocytes vs rest (Wilcoxon)")
+
+# This went into the report
+metap_LGR5 = read.csv(file = 'C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/metaplastic_ant.csv', row.names = 1)
+cont_LGR5 = read.csv(file = 'C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/control_ant.csv', row.names = 1)
+
+geom_text_repel(max.overlaps = 100)
+
+plot_volcano(df = metap_LGR5, x_axis = "Log.Fold.Change", pval_col = "Adjusted.P.Value", top_n = 90, plot_title = "Metaplastic (red) vs Control (blue) Antrum LGR5+ cells (Wilcoxon)", highlight_gene = NULL)
+

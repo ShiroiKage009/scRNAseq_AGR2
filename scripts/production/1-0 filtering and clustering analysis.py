@@ -16,7 +16,6 @@ def process_for_UMAP(data, normed = 0, leiden_res = 0.8):
     sc.pp.filter_cells(adata, min_genes= 500) # Filter cells based on the number of recognized genes
     sc.pp.filter_genes(adata, min_cells = 3) # Filter genes based on the minimum number of cells expressing it
     adata_prefilt = adata[adata.obs['predicted_doublets'] == False]
-    adata_prefilt = adata_prefilt[adata_prefilt.obs['n_genes_by_counts'] < 8000]
     if not normed:
         adata_filt = adata_prefilt[adata_prefilt.obs['pct_counts_mt'] < 50] # Filter on the cells with fewer than 10% mitochondrial reads
     else:
@@ -84,7 +83,6 @@ def process_until_norm(data):
     sc.pp.filter_genes(adata, min_cells = 3) # Filter genes based on the minimum number of cells expressing it
     adata_prefilt = adata[adata.obs['predicted_doublets'] == False]
     adata_filt = adata_prefilt[adata_prefilt.obs['pct_counts_mt'] < 50] # Filter on the cells with fewer than 10% mitochondrial reads
-    adata_prefilt = adata_prefilt[adata_prefilt.obs['n_genes_by_counts'] < 8000]
     print("################# Normalizing ... #################")
     sc.pp.normalize_total(adata_filt, target_sum=1e4) # Normalize
     print("################# Log scaling ... #################")
@@ -448,7 +446,7 @@ combined_LGR5_unfilt_subset.write_h5ad('C:/Work cache/py_projs/scRNAseq_AGR2/pro
 antrum_LGR5_unfilt_subset.write_h5ad('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/refiltering from raw and reprocessing/antrum_LGR5_unfilt_subset.h5ad')
 nocol_LGR5_unfilt_subset.write_h5ad('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/refiltering from raw and reprocessing/nocol_LGR5_unfilt_subset.h5ad')
 nocol_unfilt_subset.write_h5ad('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/refiltering from raw and reprocessing/nocol_unfilt_subset.h5ad')
-#%%
+
 
 #replace_with_%%_to_restore_cell_breaks Processing and plotting the filtered stuff from raw instead of all the redone stuff
 # For the combined
@@ -495,11 +493,22 @@ nocol_refilt_proc = process_for_UMAP(nocol_unfilt_subset, leiden_res = 0.1)
 nocol_refilt_proc.obs['Localization'] = nocol_refilt_proc.obs['Site'].astype(str) + ' ' + nocol_refilt_proc.obs['Patient'].astype(str)
 #sc.pl.umap(nocol_refilt_proc, color = ['LGR5', 'leiden', 'Localization'], size = 40)
 
-sc.pl.violin(antrum_refilt_proc, keys = 'n_genes_by_counts', groupby = 'Patient')
-sc.pl.scatter(antrum_refilt_proc, y = 'n_genes_by_counts', x = 'LGR5', color = 'Patient')
-antrum_refilt_proc.obs['Patient'].value_counts()
+#sc.pl.violin(antrum_refilt_proc, keys = 'n_genes_by_counts', groupby = 'Patient')
+#sc.pl.scatter(antrum_refilt_proc, y = 'n_genes_by_counts', x = 'LGR5', color = 'Patient')
+#antrum_refilt_proc.obs['Patient'].value_counts()
 
+#%%
 #replace_with_%%_to_restore_cell_breaks Writing the files for volcano plot in R. This is specifically for antrum_LGR5_recalc
+
+leiden_map = {
+    '0' : 'Metaplastic antrum',
+    '1' : 'Gastric antrum'}
+
+map_to_column(data = antrum_LGR5_refilt_proc, map_set = leiden_map, column = 'leiden')
+# Calculate diff exp ranking
+sc.tl.rank_genes_groups(adata = antrum_LGR5_refilt_proc, groupby = 'leiden', method = 'wilcoxon')
+sc.pl.rank_genes_groups(adata = antrum_LGR5_refilt_proc, groups = 'leiden')
+
 # Extract the relevant arrays
 gene_names = antrum_LGR5_refilt_proc.uns['rank_genes_groups']['names']
 logfoldchanges = antrum_LGR5_refilt_proc.uns['rank_genes_groups']['logfoldchanges']
@@ -509,7 +518,7 @@ pvals_adj = antrum_LGR5_refilt_proc.uns['rank_genes_groups']['pvals_adj']
 # Assuming group names are '0' and '1', adjust accordingly
 
 dataframes = {}
-for group in ['Gastric antrum', 'Metaplastic antrum']:
+for group in ['Metaplastic antrum', 'Gastric antrum']:
     # Extract information for each group
     names = gene_names[group]
     lfc = logfoldchanges[group]
