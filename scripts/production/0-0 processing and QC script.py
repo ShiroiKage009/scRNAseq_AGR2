@@ -137,7 +137,7 @@ def filter_clusters_by_gene(data, gene, threshold = 0.5):
     de_results = pd.DataFrame(adata.uns['rank_genes_groups']['names'])
     # Define a threshold for significant expression (adjust as needed)
     expression_threshold = threshold
-    # Find clusters with significant EPCAM expression
+    # Find clusters with significant gene expression
     significant_clusters = []
     for cluster in de_results.columns:
         gene_presence = de_results[cluster].str.contains(gene)

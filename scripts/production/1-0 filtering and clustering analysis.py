@@ -6,9 +6,20 @@
 import scanpy as sc
 import anndata as ad
 import pandas as pd
+import time
+
+def time_it(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        print(f"{func.__name__} executed in {end_time - start_time} seconds")
+        return result
+    return wrapper
 
 #replace_with_%%_to_restore_cell_breaks function definitions
 # The QC values used here are the same as script 0-0
+@time_it
 def process_for_UMAP(data, normed = 0, leiden_res = 0.8):
     adata = data.copy() # This is to avoid writing into the file that's entered as an argument
     print("################# Filtering ... #################")
@@ -54,6 +65,7 @@ def process_for_UMAP(data, normed = 0, leiden_res = 0.8):
     sc.pl.umap(adata_filt, color = ['leiden'])
     return adata_filt
 
+@time_it
 def recalc_UMAP(data, leiden_res = 0.8):
     adata_filt = data
     sc.tl.pca(adata_filt, svd_solver='arpack') # Compute PCA
@@ -75,6 +87,7 @@ def recalc_UMAP(data, leiden_res = 0.8):
     sc.pl.umap(adata_filt, color = ['leiden'])
     return adata_filt
 
+@time_it
 def process_until_norm(data):
     adata = data.copy() # This is to avoid writing into the file that's entered as an argument
     print("################# Filtering ... #################")
@@ -134,6 +147,8 @@ def map_to_column(data, map_set, column = 'Localization'):
     print(data.obs[column + '_old'])
     return 'Mapping function done'
 
+#replace_with_%%_to_restore_cell_breaks Start timer
+start_time = time.time()
 
 #replace_with_%%_to_restore_cell_breaks Environment settings and misc variables
 sc.settings.verbosity = 3
@@ -143,6 +158,7 @@ inspect_stem = ['LGR5', 'MKI67', 'TNFRSF19', 'BMI1', 'LRIG1', 'leiden', 'Localiz
 global_res = 0.5
 LGR5_threshold = 0.5
 diff_exp_method = 'wilcoxon'
+
 
 #replace_with_%%_to_restore_cell_breaks reading the already processed files
 combined_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/combined_proc.h5ad')
@@ -167,7 +183,7 @@ combined_patient_epithelium = filter_clusters_by_gene(data = combined_patient_pr
 #sc.pl.umap(combined_patient_epithelium, color = ['leiden', 'Localization'], title = 'combined_patient_epithelium QC')
 
 
-#replace_with_%%_to_restore_cell_breaks Relabeling Localization
+#break Relabeling Localization
 # Preparing the index 
 localization_mapping = {
     'Antrum GI6253' : 'Control Antrum',
@@ -295,6 +311,7 @@ print(antrum_epithelium.obs['Patient'].value_counts())
 #sc.pl.umap(antrum_LGR5_recalc, color = ['leiden'], size = 70, title = 'antrum LGR5')
 #sc.pl.umap(antrum_LGR5_recalc, color = ['Localization'], size = 70, title = 'antrum LGR5')
 
+#break
 # Define a dictionary mapping the old cluster numbers to the new labels
 ant_LGR5_mapping = {
     '0' : "Gastric antrum",
@@ -339,6 +356,7 @@ sc.tl.rank_genes_groups(antrum_LGR5_recalc, groupby='leiden', method = 'wilcoxon
 #sc.pl.umap(combined_MKI67_recalc, color = ['leiden'], size = 5, title = 'combined MKI67')
 #sc.pl.umap(combined_MKI67_recalc, color = ['Localization'], size = 5, title = 'combined MKI67')
 
+#break
 # Define a dictionary mapping the old cluster numbers to the new labels
 cluster_mapping = {
     '0' : "Colon",
@@ -364,6 +382,7 @@ print(combined_MKI67_recalc.obs.head())
 #sc.pl.umap(combined_LGR5_recalc, color = ['leiden'], size = 15, title = 'combined LGR5')
 #sc.pl.umap(combined_LGR5_recalc, color = ['Localization'], size = 15, title = 'combined LGR5')
 
+#break
 # Define a dictionary mapping the old cluster numbers to the new labels
 cluster_mapping = {
     '0' : "Colon",
@@ -462,6 +481,7 @@ sc.pl.umap(combined_refilt_proc, color = ['Localization', 'leiden'])
 sc.pl.umap(combined_LGR5_refilt_proc, color = ['leiden'])
 sc.pl.umap(combined_LGR5_refilt_proc, color = ['Localization'])
 
+#break
 cluster_map = {
     '0' : 'Colon',
     '1' : 'Duodenum',
@@ -497,6 +517,10 @@ nocol_refilt_proc.obs['Localization'] = nocol_refilt_proc.obs['Site'].astype(str
 #sc.pl.scatter(antrum_refilt_proc, y = 'n_genes_by_counts', x = 'LGR5', color = 'Patient')
 #antrum_refilt_proc.obs['Patient'].value_counts()
 
+end_time = time.time()
+print("Script executed in", end_time - start_time, "seconds")
+print("Script executed in", (end_time - start_time)/60, "minutes")
+
 #%%
 #replace_with_%%_to_restore_cell_breaks Writing the files for volcano plot in R. This is specifically for antrum_LGR5_recalc
 
@@ -505,9 +529,10 @@ leiden_map = {
     '1' : 'Gastric antrum'}
 
 map_to_column(data = antrum_LGR5_refilt_proc, map_set = leiden_map, column = 'leiden')
+print(antrum_LGR5_refilt_proc.obs['leiden'])
 # Calculate diff exp ranking
 sc.tl.rank_genes_groups(adata = antrum_LGR5_refilt_proc, groupby = 'leiden', method = 'wilcoxon')
-sc.pl.rank_genes_groups(adata = antrum_LGR5_refilt_proc, groups = 'leiden')
+sc.pl.rank_genes_groups(adata = antrum_LGR5_refilt_proc)
 
 # Extract the relevant arrays
 gene_names = antrum_LGR5_refilt_proc.uns['rank_genes_groups']['names']
@@ -556,3 +581,6 @@ nocol_refilt_proc.write_h5ad('C:/Work cache/py_projs/scRNAseq_AGR2/project data 
 sc.pl.umap(antrum_refilt_proc, color = ['ANPEP', 'MUC2', 'LGR5', 'MKI67', 'leiden', 'Localization'])
 
 #replace_with_%%_to_restore_cell_breaks
+end_time = time.time()
+print("Script executed in ", (end_time - start_time)/60, "minutes")
+print("Script executed in ", end_time - start_time, "seconds")
