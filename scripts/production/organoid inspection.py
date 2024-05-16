@@ -194,8 +194,6 @@ def filter_clusters_by_gene(data, gene, threshold = 0.5):
 sc.settings.verbosity = 3
 sc.set_figure_params(dpi = 600)
 
-#%%
-
 inspect_stem = ['final', 'MKI67', 'LGR5', 'TNFRSF19', 'BHLHA15', 'ASCL2', 'CD44', 'SMOC2', 'SOX2', 'STMN1', 'OLFM4', 'BMI1', 'LRIG1', 'final']
 gastric_markers = ['final', 'MKI67', 'LGR5', 'TNFRSF19', 'BHLHA15', 'ASCL2', 'CD44', 'SMOC2', 'SOX2', 'STMN1', 'OLFM4', 'BMI1', 'LRIG1', 'MUC6', 'TFF2', 'MUC5AC', 'GKN2', 'TFF1', 'GHRL', 'AQP5', 'MUC1', 'final']
 duodenal_markers = ['final', 'MKI67', 'LGR5', 'TNFRSF19', 'BHLHA15', 'ASCL2', 'CD44', 'SMOC2', 'SOX2', 'STMN1', 'OLFM4', 'BMI1', 'LRIG1', 'MUC6', 'MUC2', 'TFF3', 'GHRL', 'AQP5', 'MUC1', 'ANPEP', 'LYZ', 'final']
@@ -205,12 +203,47 @@ str(antrum_orgs)
 sc.pl.umap(antrum_orgs, color = gastric_markers)
 sc.pl.umap(antrum_orgs, color = duodenal_markers)
 sc.pl.umap(antrum_orgs, color = inspect_stem)
-sc.pl.pca(antrum_orgs, color = 'final')
+
+org_LGR5 = isolate_cells_by_gene(data = antrum_orgs, gene = 'LGR5', threshold = 0.1)
+org_MKI67 = isolate_cells_by_gene(data = antrum_orgs, gene = 'MKI67', threshold = 0.1)
+
+cont_org = antrum_orgs[antrum_orgs.obs['sample_id'] == 'Ant_organoid_Ctrl']
+AGR2_org = antrum_orgs[antrum_orgs.obs['sample_id'] == 'Ant_organoid_AGR2']
+
+cont_org_LGR5 = isolate_cells_by_gene(data = cont_org, gene = 'LGR5', threshold = 0.1)
+AGR2_org_LGR5 = isolate_cells_by_gene(data = AGR2_org, gene = 'LGR5', threshold = 0.1)
+
+cont_org_MKI67 = isolate_cells_by_gene(data = cont_org, gene = 'MKI67', threshold = 0.1)
+AGR2_org_MKI67 = isolate_cells_by_gene(data = AGR2_org, gene = 'MKI67', threshold = 0.1)
+
+sc.pl.violin(antrum_orgs, keys = ['LGR5', 'OLFM4', 'SMOC2', 'STMN1', 'MKI67'], groupby = 'sample_id', rotation = 45)
+sc.pl.violin(org_LGR5, keys = ['LGR5', 'OLFM4', 'SMOC2', 'STMN1', 'MKI67'], groupby = 'sample_id', rotation = 45)
+sc.pl.violin(org_MKI67, keys = ['LGR5', 'OLFM4', 'SMOC2', 'STMN1', 'MKI67'], groupby = 'sample_id', rotation = 45)
+
+sc.pl.scatter(antrum_orgs, x = 'LGR5', y = 'OLFM4', color = 'SMOC2', groups = 'patient_id')
+sc.pl.scatter(org_LGR5, x = 'LGR5', y = 'OLFM4', color = 'SMOC2', groups = 'patient_id')
+sc.pl.scatter(org_MKI67, x = 'LGR5', y = 'OLFM4', color = 'SMOC2', groups = 'patient_id')
+
+sc.pl.scatter(adata = cont_org_LGR5, x = 'LGR5', y = 'OLFM4', color = 'SMOC2')
+sc.pl.scatter(adata = cont_org_LGR5, x = 'LGR5', y = 'SMOC2', color = 'OLFM4')
+sc.pl.scatter(adata = cont_org_LGR5, x = 'MKI67', y = 'SMOC2', color = 'OLFM4')
+
+sc.pl.scatter(adata = AGR2_org_LGR5, x = 'LGR5', y = 'OLFM4', color = 'SMOC2')
+sc.pl.scatter(adata = AGR2_org_LGR5, x = 'LGR5', y = 'SMOC2', color = 'OLFM4')
+sc.pl.scatter(adata = AGR2_org_LGR5, x = 'MKI67', y = 'SMOC2', color = 'OLFM4')
 
 
-sc.pl.scatter(adata = antrum_orgs, x = 'LGR5', y = 'OLFM4', color = 'SMOC2')
-sc.pl.scatter(adata = antrum_orgs, x = 'LGR5', y = 'SMOC2', color = 'OLFM4')
-sc.pl.scatter(adata = antrum_orgs, x = 'MKI67', y = 'SMOC2', color = 'OLFM4')
+
+
+sc.pl.umap(cont_org, color = gastric_markers, title = 'cont_org_gastric_markers')
+sc.pl.umap(cont_org, color = duodenal_markers, title = 'cont_org_duod_markers')
+sc.pl.umap(cont_org, color = inspect_stem, title = 'cont_org_stem_markers')
+
+sc.pl.umap(AGR2_org, color = gastric_markers, title = 'AGR2_org_gastric_markers')
+sc.pl.umap(AGR2_org, color = duodenal_markers, title = 'AGR2_org_duod_markers')
+sc.pl.umap(AGR2_org, color = inspect_stem, title = 'AGR2_org_stem_markers')
+
+#%%
 
 stem_cluster = antrum_orgs[antrum_orgs.obs['final'] == 'Proliferative3_LGR5hi']
 sc.pl.umap(stem_cluster, color = gastric_markers)

@@ -5,16 +5,17 @@
 import scanpy as sc
 import anndata as ad
 import pandas as pd
+import time
 
 #%% function definitions
 # DEFAULT QC VALUES. Calibrated to Sarah Teichmann's paper "Cells of the human intestinal tract mapped across space and time." These QC values will apply by default for this entire script.
-def filter_cells_for_UMAP(data, min_ct = 2000, min_gen = 200, min_cell = 3, mt_pct = 50, max_genes = 8000, normed = 0): 
+def filter_cells_for_UMAP(data, min_ct = 2000, min_gen = 500, min_cell = 3, mt_pct = 60, max_genes = 0, normed = 0, d_score = 0.24): 
     adata = data # This is to avoid writing into the file that's entered as an argument
     print("################# Filtering ... #################")
     sc.pp.filter_cells(adata, min_counts = min_ct) # Filter cells based on number of RNA reads
     sc.pp.filter_cells(adata, min_genes= min_gen) # Filter cells based on the number of recognized genes
     sc.pp.filter_genes(adata, min_cells = min_cell) # Filter genes based on the minimum number of cells expressing it
-    adata_prefilt = adata[adata.obs['predicted_doublets'] == False]
+    adata_prefilt = adata[adata.obs['doublet_scores'] < 0.24]
     if max_genes > 0:
         adata_prefilt = adata_prefilt[adata_prefilt.obs['n_genes_by_counts'] < max_genes]
         
@@ -24,10 +25,10 @@ def filter_cells_for_UMAP(data, min_ct = 2000, min_gen = 200, min_cell = 3, mt_p
         adata_filt = adata_prefilt
     return adata_filt    
 
-def process_for_UMAP(data, normed = 0, leiden_res = 0.8, filtering = 1, min_ct = 2000, min_gen = 200, min_cell = 3, mt_pct = 50, max_genes = 8000): # DEFAULT QC VALUES
+def process_for_UMAP(data, leiden_res = 0.8, filtering = 1, min_ct = 2000, min_gen = 500, min_cell = 3, mt_pct = 60, max_genes = 0, normed = 0, d_score = 0.24): # DEFAULT QC VALUES
     adata = data # This is to avoid writing into the file that's entered as an argument
     if filtering:
-        adata_filt = filter_cells_for_UMAP(data = adata, min_ct = min_ct, min_gen = min_gen, min_cell = min_cell, max_genes = max_genes, mt_pct = mt_pct)
+        adata_filt = filter_cells_for_UMAP(data = adata, min_ct = min_ct, min_gen = min_gen, min_cell = min_cell, max_genes = max_genes, mt_pct = mt_pct, d_score = d_score)
     else:
         adata_filt = adata       
     print("################# Normalizing ... #################")
@@ -91,30 +92,6 @@ def recalc_UMAP(data_filt, leiden_res = 0.8):
 #######################################################
 ################## FUNCTION DEF END ###################
 #######################################################
-
-
-def process_until_norm(data, cells, min_ct = 2000, min_gen = 200, min_cell = 3, mt_pct = 50, max_genes = 8000): # DEFAULT QC VALUES
-    adata = data # This is to avoid writing into the file that's entered as an argument
-    print("################# Filtering ... #################")
-    sc.pp.filter_cells(adata, min_counts = min_ct) # Filter cells based on number of RNA reads
-    sc.pp.filter_cells(adata, min_genes= min_gen) # Filter cells based on the number of recognized genes
-    sc.pp.filter_genes(adata, min_cells = min_cell) # Filter genes based on the minimum number of cells expressing it
-    adata_prefilt = adata[adata.obs['predicted_doublets'] == False]
-    if max_genes > 0:
-        adata_prefilt = adata_prefilt[adata_prefilt.obs['n_genes_by_counts'] < max_genes]
-    adata_filt = adata_prefilt[adata_prefilt.obs['pct_counts_mt'] < mt_pct] # Filter on the cells with fewer than 10% mitochondrial reads
-    print("################# Normalizing ... #################")
-    sc.pp.normalize_total(adata_filt, target_sum=1e4) # Normalize
-    print("################# Log scaling ... #################")
-    sc.pp.log1p(adata_filt) # Log scaling
-    print("#################Finding variable genes ... #################")
-    sc.pp.highly_variable_genes(adata_filt, min_mean = 0.0125, max_mean = 3, min_disp = 0.5) # Compute differentially expressed genes within the sample
-    print("################# Saving raw data ... #################")
-    adata_filt.raw = adata_filt # Store the raw files in its own layer
-    return adata_filt
-#######################################################
-################## FUNCTION DEF END ###################
-#######################################################
     
 
 def isolate_cells_by_gene(data, gene, threshold):
@@ -155,7 +132,7 @@ sc.set_figure_params(dpi = 600)
 # MIK67 = Ki67, TNSFRSF19 = TROY
 inspect_stem = ['LGR5', 'MKI67', 'TNFRSF19', 'BMI1', 'LRIG1', 'leiden', 'Localization']
 global_res = 0.5
-
+start_time = time.time()
 
 #%% Read the files
 col_org_unfilt = sc.read("C:/Work cache/Project sync/PhD/Research projects/AGR2 follow-up/Data cache/ssRNAseq/Aline/raw_data/agr2colon_organoids_unfilt.h5ad")
@@ -175,6 +152,11 @@ combined_control = combined_unique[combined_unique.obs['Patient'] == 'GI6253', :
 combined_control.obs['Localization'] = combined_control.obs['Site'].astype(str) + ' ' + combined_control.obs['Patient'].astype(str)
 combined_patient = combined_unique[combined_unique.obs['Patient'] == 'P26', :] # Using the unique object seems to work for filtering while usign the combined object directly doesn't. No idea why.
 combined_patient.obs['Localization'] = combined_patient.obs['Site'].astype(str) + ' ' + combined_patient.obs['Patient'].astype(str)
+duo_unfilt.obs['Localization'] = duo_unfilt.obs['Site'].astype(str) + ' ' + duo_unfilt.obs['Patient'].astype(str)
+duo_pat_unfilt = duo_unfilt[duo_unfilt.obs['Patient'] == 'P26', :]
+duo_pat_unique = duo_pat_unfilt[~duo_pat_unfilt.obs['cellbarcode'].duplicated(keep = 'first')].copy()
+duo_cont_unfilt = duo_unfilt[duo_unfilt.obs['Patient'] == 'GI6253', :]
+duo_cont_unique = duo_cont_unfilt[~duo_cont_unfilt.obs['cellbarcode'].duplicated(keep = 'first')].copy()
 
 #%% Initial processing the UMAP
 combined_proc = process_for_UMAP(combined, leiden_res = global_res)
@@ -182,6 +164,10 @@ combined_nocol_proc = process_for_UMAP(combined_nocol, leiden_res = global_res)
 antrum_proc = process_for_UMAP(ant_unfilt, leiden_res = global_res)
 combined_control_proc = process_for_UMAP(combined_control, leiden_res = global_res)
 combined_patient_proc = process_for_UMAP(combined_patient, leiden_res = global_res)
+duo_proc = process_for_UMAP(duo_unfilt, leiden_res = global_res)
+duo_pat_proc = process_for_UMAP(duo_pat_unique, leiden_res = global_res)
+duo_cont_proc = process_for_UMAP(duo_cont_unique, leiden_res = global_res)
+
 
 #%% Write files to save then load in the next script
 combined_proc.write_h5ad(filename = 'C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/combined_proc.h5ad')
@@ -189,6 +175,9 @@ combined_nocol_proc.write_h5ad(filename = 'C:/Work cache/py_projs/scRNAseq_AGR2/
 antrum_proc.write_h5ad(filename = 'C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/antrum_proc.h5ad')
 combined_control_proc.write_h5ad(filename = 'C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/combined_control_proc.h5ad')
 combined_patient_proc.write_h5ad(filename = 'C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/combined_patient_proc.h5ad')
+duo_proc.write_h5ad(filename = 'C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/duodenum_combined.h5ad')
+duo_pat_proc.write_h5ad(filename = 'C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/duodenum_patient.h5ad')
+duo_cont_proc.write_h5ad(filename = 'C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/duodenum_control.h5ad')
 
 #%% Printing the bookend
 # =============================================================================
@@ -196,7 +185,10 @@ print("######################################################################")
 print("####                        END OF SCRIPT                         ####")
 print("######################################################################")
 # =============================================================================
-
+end_time = time.time()
+elapsed = end_time - start_time
+print("Script concluded in", elapsed, "seconds")
+print("Script concluded in", elapsed/60, "minutes")
 #%% Testing cell within the script
 
 

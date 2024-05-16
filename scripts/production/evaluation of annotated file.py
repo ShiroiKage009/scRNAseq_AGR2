@@ -14,7 +14,7 @@ def time_it(func):
         return result
     return wrapper
 
-# DEFAULT QC VALUES. Calibrated to Sarah Teichmann's paper 'Cells of the human intestinal tract mapped across space and time.' These QC values will apply by default for this entire script.
+# DEFAULT QC VALUES
 def filter_cells_for_UMAP(data, min_gen = 500, min_cell = 3, mt_pct = 60, normed = 0, doublet_threshold = 0.24): #min_ct is removed. Consider restoring it later. You will find it commented out below.
     adata = data # This is to avoid writing into the file that's entered as an argument
     print('################# Filtering ... #################')

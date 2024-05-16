@@ -23,3 +23,7 @@ project data cache/refiltering from raw and reprocessing/combined_unfilt_subset.
 project data cache/refiltering from raw and reprocessing/nocol_LGR5_unfilt_subset.h5ad
 project data cache/refiltering from raw and reprocessing/nocol_unfilt_subset.h5ad
 scRNAseq_R_plotting/data/combined_test
+project data cache/refiltering from raw and reprocessing/duodenum_unfilt_subset.h5ad
+project data cache/testing integration with separation and the stem cells part 2/saved files/duodenum_combined.h5ad
+project data cache/testing integration with separation and the stem cells part 2/saved files/duodenum_control.h5ad
+project data cache/testing integration with separation and the stem cells part 2/saved files/duodenum_patient.h5ad

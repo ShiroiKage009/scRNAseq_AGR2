@@ -220,6 +220,8 @@ global_res = 0.5
 
 unif_data = sc.read_h5ad('C:/Work cache/data cache/testing/gim and eim unified umap of all file.h5ad')
 unif_data.obsm['X_umap'] = unif_data.obsm['X_umap_MinDist_0.5_N_Neighbors_15']
+sc.pl.umap(unif_data, color = 'Detailed_Cell_Type')
+sc.pl.umap(unif_data, color = 'cell_type')
 
 unif_GIM_healthy = unif_data[unif_data.obs['Patient_status'] != 'BE']
 

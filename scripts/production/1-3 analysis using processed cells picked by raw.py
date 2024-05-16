@@ -1,4 +1,4 @@
-# This script performs some analysis using hte cells identified and filtered based on previous analyses but begins from their raw values.# This script is for poking around in the files filtered 
+# This script performs some analysis using the cells identified and filtered based on previous analyses but begins from their raw values.# This script is for poking around in the files filtered 
 # and downstream analyses
 
 # Import packages
@@ -157,6 +157,7 @@ def map_to_column(data, map_set, column = 'Localization'):
 sc.settings.verbosity = 3
 sc.set_figure_params(dpi = 600)
 inspect_stem = ['LGR5', 'MKI67', 'TNFRSF19', 'BMI1', 'SMOC2', 'ASCL2', 'LRIG1', 'Patient']
+inspect_prolif = ['MKI67', 'PLK1', 'E2F1', 'FOXM1', 'MCM2', 'MCM7', 'BUB1', 'CCNE1', 'CCND1', 'CCNB1', 'TOP2A']
 global_res = 0.5
 LGR5_threshold = 0.5
 diff_exp_method = 'wilcoxon'
@@ -171,10 +172,10 @@ nocol_LGR5_subset = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data c
 nocol_refilt_subset = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/refiltering from raw and reprocessing/nocol_unfilt_subset.h5ad')
 
 #%%
-
 processed_antrum = antrum_subset.copy()
 processed_antrum = process_for_UMAP(processed_antrum, leiden_res = 0.5)
 sc.pl.umap(processed_antrum, color = ['LGR5', 'ANPEP', 'MUC5AC', 'MUC2', 'MUC6', 'GKN2', 'MKI67', 'SMOC2', 'GHRL', 'TFF1', 'TFF2', 'GAST', 'CCKBR', 'CHGA', 'leiden', 'Patient'], size = 10)
+sc.pl.umap(processed_antrum, color = inspect_prolif, size = 20)
 sc.tl.rank_genes_groups(adata = processed_antrum, groupby = 'leiden')
 sc.pl.rank_genes_groups(processed_antrum, n_genes = 25)
 

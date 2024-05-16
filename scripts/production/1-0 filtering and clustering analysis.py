@@ -17,20 +17,29 @@ def time_it(func):
         return result
     return wrapper
 
-#replace_with_%%_to_restore_cell_breaks function definitions
-# The QC values used here are the same as script 0-0
-@time_it
-def process_for_UMAP(data, normed = 0, leiden_res = 0.8):
-    adata = data.copy() # This is to avoid writing into the file that's entered as an argument
+# DEFAULT QC VALUES. Calibrated to Sarah Teichmann's paper "Cells of the human intestinal tract mapped across space and time." These QC values will apply by default for this entire script.
+def filter_cells_for_UMAP(data, min_ct = 2000, min_gen = 500, min_cell = 3, mt_pct = 60, max_genes = 0, normed = 0, d_score = 0.24): 
+    adata = data # This is to avoid writing into the file that's entered as an argument
     print("################# Filtering ... #################")
-    sc.pp.filter_cells(adata, min_counts = 2000) # Filter cells based on minimum number of RNA reads
-    sc.pp.filter_cells(adata, min_genes= 500) # Filter cells based on the number of recognized genes
-    sc.pp.filter_genes(adata, min_cells = 3) # Filter genes based on the minimum number of cells expressing it
-    adata_prefilt = adata[adata.obs['predicted_doublets'] == False]
+    sc.pp.filter_cells(adata, min_counts = min_ct) # Filter cells based on number of RNA reads
+    sc.pp.filter_cells(adata, min_genes= min_gen) # Filter cells based on the number of recognized genes
+    sc.pp.filter_genes(adata, min_cells = min_cell) # Filter genes based on the minimum number of cells expressing it
+    adata_prefilt = adata[adata.obs['doublet_scores'] < 0.24]
+    if max_genes > 0:
+        adata_prefilt = adata_prefilt[adata_prefilt.obs['n_genes_by_counts'] < max_genes]
+        
     if not normed:
-        adata_filt = adata_prefilt[adata_prefilt.obs['pct_counts_mt'] < 50] # Filter on the cells with fewer than 10% mitochondrial reads
+        adata_filt = adata_prefilt[adata_prefilt.obs['pct_counts_mt'] < mt_pct] # Filtering based on percentage of mitochondrial genes
     else:
         adata_filt = adata_prefilt
+    return adata_filt    
+
+def process_for_UMAP(data, leiden_res = 0.8, filtering = 1, min_ct = 2000, min_gen = 500, min_cell = 3, mt_pct = 60, max_genes = 0, normed = 0, d_score = 0.24): # DEFAULT QC VALUES
+    adata = data # This is to avoid writing into the file that's entered as an argument
+    if filtering:
+        adata_filt = filter_cells_for_UMAP(data = adata, min_ct = min_ct, min_gen = min_gen, min_cell = min_cell, max_genes = max_genes, mt_pct = mt_pct, d_score = d_score)
+    else:
+        adata_filt = adata       
     print("################# Normalizing ... #################")
     sc.pp.normalize_total(adata_filt, target_sum=1e4) # Normalize
     print("################# Log scaling ... #################")
@@ -48,21 +57,25 @@ def process_for_UMAP(data, normed = 0, leiden_res = 0.8):
     print("################# Calculating PCA ... #################")
     sc.tl.pca(adata_filt, svd_solver='arpack') # Compute PCA
     print("################# Calculating tSNE ... #################")
-    sc.tl.tsne(adata_filt)
+    sc.tl.tsne(adata_filt) # Calculate tsne
     print("################# Calculating neighbors ... #################")
-    sc.pp.neighbors(adata_filt)
+    sc.pp.neighbors(adata_filt) # Calculate neighbors
     print("################# Calculating Leiden ... #################")
-    sc.tl.leiden(adata_filt, resolution = leiden_res)
+    sc.tl.leiden(adata_filt, resolution = leiden_res) # Calculate Leiden clusters
     print("################# Calculating PAGA ... #################")
-    sc.tl.paga(adata_filt)
+    sc.tl.paga(adata_filt) # Calculate PAGA
     print("################# Plotting PAGA ... #################")
     sc.pl.paga(adata_filt, plot = 1)  # remove `plot=False` if you want to see the coarse-grained graph
     print("################# Calculating UMAP init_pos = paga #################")
-    sc.tl.umap(adata_filt, init_pos='paga')
+    sc.tl.umap(adata_filt, init_pos='paga') # Plot PAGA
     print("################# Calculating UMAP ... #################")
-    sc.tl.umap(adata_filt)
+    sc.tl.umap(adata_filt) # Calculate UMAP
     print("#################Plotting UMAP ... #################")
-    sc.pl.umap(adata_filt, color = ['leiden'])
+    sc.pl.umap(adata_filt, color = ['leiden']) # Plot UMAP and show Leiden clusters
+    return adata_filt
+#######################################################
+################## FUNCTION DEF END ###################
+#######################################################
     return adata_filt
 
 @time_it
@@ -94,8 +107,8 @@ def process_until_norm(data):
     sc.pp.filter_cells(adata, min_counts = 2000) # Filter cells based on number of RNA reads
     sc.pp.filter_cells(adata, min_genes= 500) # Filter cells based on the number of recognized genes
     sc.pp.filter_genes(adata, min_cells = 3) # Filter genes based on the minimum number of cells expressing it
-    adata_prefilt = adata[adata.obs['predicted_doublets'] == False]
-    adata_filt = adata_prefilt[adata_prefilt.obs['pct_counts_mt'] < 50] # Filter on the cells with fewer than 10% mitochondrial reads
+    adata_prefilt = adata[adata.obs['doublet_scores'] < 0.24]
+    adata_filt = adata_prefilt[adata_prefilt.obs['pct_counts_mt'] < 60] # Filter on the cells with fewer than 10% mitochondrial reads
     print("################# Normalizing ... #################")
     sc.pp.normalize_total(adata_filt, target_sum=1e4) # Normalize
     print("################# Log scaling ... #################")
@@ -166,7 +179,7 @@ combined_nocol_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data
 antrum_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/antrum_proc.h5ad')
 combined_control_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/combined_control_proc.h5ad')
 combined_patient_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/combined_patient_proc.h5ad')
-
+duodenum_proc = sc.read('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/duodenum_combined.h5ad')
 
 #replace_with_%%_to_restore_cell_breaks Gating on epithelial cells in the fully-combined file
 combined_epithelium = filter_clusters_by_gene(data = combined_proc, gene = 'EPCAM')
@@ -174,6 +187,7 @@ antrum_epithelium = filter_clusters_by_gene(data = antrum_proc, gene = 'EPCAM')
 nocol_epithelium = filter_clusters_by_gene(data = combined_nocol_proc, gene = 'EPCAM')
 combined_control_epithelium = filter_clusters_by_gene(data = combined_control_proc, gene = 'EPCAM')
 combined_patient_epithelium = filter_clusters_by_gene(data = combined_patient_proc, gene = 'EPCAM')
+duodenum_epithelium = filter_clusters_by_gene(data = duodenum_proc, gene = 'EPCAM')
 
 #replace_with_%%_to_restore_cell_breaks QC check plots
 #sc.pl.umap(combined_epithelium, color = ['leiden', 'Localization'], title = 'combined_epithelium QC')
@@ -197,17 +211,16 @@ localization_mapping = {
 # Doing the mapping
 # The combined dataset
 map_to_column(combined_epithelium, map_set = localization_mapping, column = 'Localization')
-
 # The antrum dataset
 map_to_column(data = antrum_epithelium, map_set = localization_mapping, column = 'Localization')
-
 # The combined no colon dataset
 map_to_column(data = nocol_epithelium, map_set = localization_mapping, column = 'Localization')
-
 # The combined control only
 map_to_column(data = combined_control_epithelium, map_set = localization_mapping, column = 'Localization')
+# The combined duodenum
+map_to_column(data = duodenum_epithelium, map_set = localization_mapping, column = 'Localization')
 
-#replace_with_%%_to_restore_cell_breaks Filtering and combining the LGR5 and MKI67 cells from all the different epithelial combinations
+#%% Filtering and combining the LGR5 and MKI67 cells from all the different epithelial combinations
 # Filtering combined
 combined_ep_LGR5 = isolate_cells_by_gene(data = combined_epithelium, gene = 'LGR5', threshold = LGR5_threshold)
 combined_ep_MKI67 = isolate_cells_by_gene(data = combined_epithelium, gene = 'MKI67', threshold = 0.5)
@@ -232,7 +245,13 @@ combined_control_ep_MKI67 = isolate_cells_by_gene(data = combined_control_epithe
 combined_control_nu_LGR5MKI67 = ad.concat([combined_control_ep_LGR5, combined_control_ep_MKI67], join = 'outer')
 combined_control_LGR5MKI67 = combined_control_nu_LGR5MKI67[~combined_control_nu_LGR5MKI67.obs['cellbarcode'].duplicated(keep = 'first')].copy()
 
-#replace_with_%%_to_restore_cell_breaks Recalculating UMAPs of the different combinations
+# Filtering duodenum only
+duo_ep_LGR5 = isolate_cells_by_gene(data = duodenum_epithelium, gene = 'LGR5', threshold = LGR5_threshold)
+duo_ep_MKI67 = isolate_cells_by_gene(data = duodenum_epithelium, gene = 'MKI67', threshold = 0.5)
+duo_nu_LGR5MKI67 = ad.concat([duo_ep_LGR5, duo_ep_MKI67], join = 'outer')
+duoduo_LGR5MKI67 = duo_nu_LGR5MKI67[~duo_nu_LGR5MKI67.obs['cellbarcode'].duplicated(keep = 'first')].copy()
+
+#%% Recalculating UMAPs of the different combinations
 combined_LGR5_recalc = recalc_UMAP(data = combined_ep_LGR5, leiden_res = 0.1)
 combined_MKI67_recalc = recalc_UMAP(data = combined_ep_MKI67, leiden_res = 0.1)
 
@@ -245,6 +264,9 @@ nocol_MKI67_recalc = recalc_UMAP(data = nocol_ep_MKI67, leiden_res = 0.5)
 combined_control_LGR5_recalc = recalc_UMAP(data = combined_control_ep_LGR5, leiden_res = 0.5)
 combined_control_MKI67_recalc = recalc_UMAP(data = combined_control_ep_MKI67, leiden_res = 0.5)
 
+duo_LGR5_recalc = recalc_UMAP(data = duo_ep_LGR5, leiden_res = 0.5)
+duo_MNKI67_recalc = recalc_UMAP(data = duo_ep_MKI67, leiden_res = 0.5)
+
 combined_LGR5MKI67_recalc = recalc_UMAP(data = combined_LGR5MKI67, leiden_res = 0.1)
 nocol_LGR5MKI67_recalc = recalc_UMAP(data = nocol_LGR5MKI67, leiden_res = 0.1)
 antrum_LGR5MKI67_recalc = recalc_UMAP(data = antrum_LGR5MKI67, leiden_res = 0.05)
@@ -256,11 +278,7 @@ print("####   END OF PROCESSING. START MESSING AROUND WITH ANALYSIS.     ####")
 print("######################################################################")
 # =============================================================================
 
-#replace_with_%%_to_restore_cell_breaks
-
-
-
-#replace_with_%%_to_restore_cell_breaks Plotting Checking all the different QC metrics in obs post processing just to make sure things are proper
+#%% Plotting Checking all the different QC metrics in obs post processing just to make sure things are proper
 checking = ['Biopsies', 'Inflammation', 'pct_counts_mt', 'pct_counts_rp', 'pct_counts_hb', 'n_genes', 'doublet_scores', 'Localization']
 str(combined_epithelium)
 #sc.pl.umap(combined_LGR5_recalc, color = checking) 
@@ -311,7 +329,7 @@ print(antrum_epithelium.obs['Patient'].value_counts())
 #sc.pl.umap(antrum_LGR5_recalc, color = ['leiden'], size = 70, title = 'antrum LGR5')
 #sc.pl.umap(antrum_LGR5_recalc, color = ['Localization'], size = 70, title = 'antrum LGR5')
 
-#break
+#%%
 # Define a dictionary mapping the old cluster numbers to the new labels
 ant_LGR5_mapping = {
     '0' : "Gastric antrum",
@@ -356,7 +374,7 @@ sc.tl.rank_genes_groups(antrum_LGR5_recalc, groupby='leiden', method = 'wilcoxon
 #sc.pl.umap(combined_MKI67_recalc, color = ['leiden'], size = 5, title = 'combined MKI67')
 #sc.pl.umap(combined_MKI67_recalc, color = ['Localization'], size = 5, title = 'combined MKI67')
 
-#break
+#%%
 # Define a dictionary mapping the old cluster numbers to the new labels
 cluster_mapping = {
     '0' : "Colon",
@@ -429,17 +447,19 @@ sep = combined_LGR5MKI67_recalc[indices_of_interest]
 #sc.pl.umap(sep, color = ['MKI67', 'LGR5', 'leiden', 'Localization'])
 
 
-#replace_with_%%_to_restore_cell_breaks Extracting the barcodes of the filtered cells so we can retrieve their raw values
+#%% Extracting the barcodes of the filtered cells so we can retrieve their raw values
 
 # Start by reading the barcodes
 # LGR5
 antrum_LGR5_barcodes = antrum_LGR5_recalc.obs_names.tolist()
 nocol_LGR5_barcodes = nocol_LGR5_recalc.obs_names.tolist()
 combined_LGR5_barcodes = combined_LGR5_recalc.obs_names.tolist()
+duo_LGR5_barcodes = duo_LGR5_recalc.obs_names.tolist()
 # Epithelium
 antrum_barcodes = antrum_epithelium.obs_names.tolist()
 nocol_barcodes = nocol_epithelium.obs_names.tolist()
 combined_barcodes = combined_epithelium.obs_names.tolist()
+duodenum_barcodes = duodenum_epithelium.obs_names.tolist()
 
 # Reading the original files
 ant_unfilt = sc.read("C:/Work cache/Project sync/PhD/Research projects/AGR2 follow-up/Data cache/ssRNAseq/Aline/raw_data/agr2_unfilt_antrum.h5ad")
@@ -448,15 +468,23 @@ col_unfilt = sc.read("C:/Work cache/Project sync/PhD/Research projects/AGR2 foll
 combined_unfilt = ad.concat([ant_unfilt, duo_unfilt, col_unfilt], join = 'outer')
 nocol_unfilt = ad.concat([duo_unfilt, ant_unfilt], join = 'outer')
 
+# Adding Localization column
+ant_unfilt.obs['Localization'] = ant_unfilt.obs['Site'].astype(str) + ' ' + ant_unfilt.obs['Patient'].astype(str)
+duo_unfilt.obs['Localization'] = duo_unfilt.obs['Site'].astype(str) + ' ' + duo_unfilt.obs['Patient'].astype(str)
+col_unfilt.obs['Localization'] = col_unfilt.obs['Site'].astype(str) + ' ' + col_unfilt.obs['Patient'].astype(str)
+combined_unfilt.obs['Localization'] = combined_unfilt.obs['Site'].astype(str) + ' ' + combined_unfilt.obs['Patient'].astype(str)
+
 # Subsetting
 # LGR5
 antrum_LGR5_unfilt_subset = ant_unfilt[antrum_LGR5_barcodes].copy()
 combined_LGR5_unfilt_subset = combined_unfilt[combined_LGR5_barcodes].copy()
 nocol_LGR5_unfilt_subset = nocol_unfilt[nocol_LGR5_barcodes].copy()
+duodenum_LGR5_unfilt_subset = duo_unfilt[duo_LGR5_barcodes].copy()
 # Epithelium
 antrum_unfilt_subset = ant_unfilt[antrum_barcodes].copy()
 combined_unfilt_subset = combined_unfilt[combined_barcodes].copy()
 nocol_unfilt_subset = nocol_unfilt[nocol_barcodes].copy()
+duodenum_unfilt_subset = combined_unfilt[duodenum_barcodes].copy()
 
 # Writing the refiltered but not processed files
 combined_unfilt_subset.write_h5ad('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/refiltering from raw and reprocessing/combined_unfilt_subset.h5ad')
@@ -465,23 +493,21 @@ combined_LGR5_unfilt_subset.write_h5ad('C:/Work cache/py_projs/scRNAseq_AGR2/pro
 antrum_LGR5_unfilt_subset.write_h5ad('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/refiltering from raw and reprocessing/antrum_LGR5_unfilt_subset.h5ad')
 nocol_LGR5_unfilt_subset.write_h5ad('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/refiltering from raw and reprocessing/nocol_LGR5_unfilt_subset.h5ad')
 nocol_unfilt_subset.write_h5ad('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/refiltering from raw and reprocessing/nocol_unfilt_subset.h5ad')
-
+duodenum_unfilt_subset.write_h5ad('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/refiltering from raw and reprocessing/duodenum_unfilt_subset.h5ad')
 
 #replace_with_%%_to_restore_cell_breaks Processing and plotting the filtered stuff from raw instead of all the redone stuff
 # For the combined
 # LGR5
 combined_LGR5_refilt_proc = process_for_UMAP(combined_LGR5_unfilt_subset, leiden_res = 0.1)
-combined_LGR5_refilt_proc.obs['Localization'] = combined_LGR5_refilt_proc.obs['Site'].astype(str) + ' ' + combined_LGR5_refilt_proc.obs['Patient'].astype(str)
 #sc.pl.umap(combined_LGR5_refilt_proc, color = ['LGR5', 'leiden', 'Localization'], size = 20)
 # Epithelium
 combined_refilt_proc = process_for_UMAP(combined_unfilt_subset, leiden_res = 0.1)
-combined_refilt_proc.obs['Localization'] = combined_refilt_proc.obs['Site'].astype(str) + ' ' + combined_refilt_proc.obs['Patient'].astype(str)
 #sc.pl.umap(combined_refilt_proc, color = ['LGR5', 'leiden', 'Localization'], size = 20)
 sc.pl.umap(combined_refilt_proc, color = ['Localization', 'leiden'])
 sc.pl.umap(combined_LGR5_refilt_proc, color = ['leiden'])
 sc.pl.umap(combined_LGR5_refilt_proc, color = ['Localization'])
 
-#break
+#%%
 cluster_map = {
     '0' : 'Colon',
     '1' : 'Duodenum',
@@ -533,6 +559,8 @@ print(antrum_LGR5_refilt_proc.obs['leiden'])
 # Calculate diff exp ranking
 sc.tl.rank_genes_groups(adata = antrum_LGR5_refilt_proc, groupby = 'leiden', method = 'wilcoxon')
 sc.pl.rank_genes_groups(adata = antrum_LGR5_refilt_proc)
+sc.pl.umap(antrum_LGR5_refilt_proc, color = 'leiden')
+sc.pl.umap(antrum_LGR5_refilt_proc, color = 'Localization')
 
 # Extract the relevant arrays
 gene_names = antrum_LGR5_refilt_proc.uns['rank_genes_groups']['names']
@@ -584,3 +612,12 @@ sc.pl.umap(antrum_refilt_proc, color = ['ANPEP', 'MUC2', 'LGR5', 'MKI67', 'leide
 end_time = time.time()
 print("Script executed in ", (end_time - start_time)/60, "minutes")
 print("Script executed in ", end_time - start_time, "seconds")
+
+#%%
+antrum_ep_LGR5.obs['Patient'].value_counts()
+antrum_ep_MKI67.obs['Patient'].value_counts()
+antrum_epithelium.obs['Patient'].value_counts()
+
+duodenum_epithelium.obs['Patient'].value_counts()
+duo_ep_LGR5.obs['Patient'].value_counts()
+duo_ep_MKI67.obs['Patient'].value_counts()

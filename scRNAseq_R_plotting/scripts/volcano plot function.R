@@ -15,12 +15,12 @@ plot_volcano <- function(df, x_axis, pval_col, highlight_gene = NULL, top_n = 0,
   df$MinusLog10P = -log10(df[[pval_col]])
   
   # Compute significance
-  df$Significance <- ifelse(df[[pval_col]] < 0.05 & abs(df[[x_axis]]) > 1, ifelse(df[[x_axis]] < 0, "significant negative", "significant"), "not significant")
+  df$Significance <- ifelse(df[[pval_col]] < 0.05 & abs(df[[x_axis]]) > 1, ifelse(df[[x_axis]] < 0, "Control", "Metaplastic"), "not significant") # Change those for the legend labels
   
   # Start plotting
   p <- ggplot(df, aes_string(x = x_axis, y = y_axis)) +
     geom_point(aes_string(color = "Significance"), alpha = 0.5) +
-    scale_color_manual(values = c("significant negative" = "#2C56FF", "significant" = "red", "not significant" = "grey")) +
+    scale_color_manual(values = c("Control" = "#2C56FF", "Metaplastic" = "red", "not significant" = "grey")) +   # Change those for the legend labels
     geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "darkgrey") +
     geom_vline(xintercept = c(-1, 1), linetype = "dashed", color = "darkgrey") +
     annotate("text", x = Inf, y = -log10(0.05) + 0.5, label = "P-value Threshold", color = "black", hjust = 1) +
