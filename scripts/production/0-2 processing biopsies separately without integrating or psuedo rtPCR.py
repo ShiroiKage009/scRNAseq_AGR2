@@ -2,6 +2,9 @@
 # Import packages
 import scanpy as sc
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
 import time
 
 def time_it(func):
@@ -190,6 +193,53 @@ def filter_clusters_by_gene(data, gene, threshold = 0.5):
 ################## FUNCTION DEF END ###################
 #######################################################
 
+def scatter_density_plot(data, background = 'grey', cmap = 'hsv', upxlim = None, loxlim = None, upylim = None, loylim = None, size = None, bw_adjust = 0.5):
+    # Assuming 'cont_org' is your AnnData object and it has the necessary columns
+    x = 'Gastric stemness'
+    y = 'Intestinal stemness'
+    
+    # Extract the data from the AnnData object
+    x_data = data.obs[x].values
+    y_data = data.obs[y].values
+    
+    # Creating the density plot
+    plt.figure()
+    
+    # Set the axes
+    plt.xlim(loxlim, upxlim);
+    plt.ylim(loylim, upylim);
+    
+    # Create the base scatter plot
+    plt.scatter(x_data, y_data, c = 'gray', s = size, edgecolor='none')
+
+    # Create the heatmap on top    
+    sns.kdeplot(x = x_data, y = y_data, cmap = "hsv", shade=True, bw_adjust = bw_adjust)
+    
+    # Label the axes
+    plt.xlabel(x)
+    plt.ylabel(y)
+    
+    # Show the plot
+    plt.show()
+    
+    return(plt)
+
+#######################################################
+################## FUNCTION DEF END ###################
+#######################################################
+
+# Function for mapping names to columns specifically
+def map_to_column(data, map_set, column = 'Localization'):
+    data.obs[column + '_old'] = data.obs[column]
+    data.obs[column] = data.obs[column].map(map_set)
+    print(data.obs[column])
+    print(data.obs[column + '_old'])
+    return 'Mapping function done'
+
+#######################################################
+################## FUNCTION DEF END ###################
+#######################################################
+
 #break Execution start begin with timing
 start_time = time.time()
 sc.settings.verbosity = 3
@@ -209,7 +259,7 @@ duodenal_markers = ['leiden', 'MKI67', 'LGR5', 'TNFRSF19', 'BHLHA15', 'ASCL2', '
 global_res = 0.5
 
 
-#%%
+#Break
 duo_unfilt = sc.read("C:/Work cache/Project sync/PhD/Research projects/AGR2 follow-up/Data cache/ssRNAseq/Aline/raw_data/agr2_unfilt_duodenum.h5ad")
 ant_unfilt = sc.read("C:/Work cache/Project sync/PhD/Research projects/AGR2 follow-up/Data cache/ssRNAseq/Aline/raw_data/agr2_unfilt_antrum.h5ad")
 duo_unfilt.obs['Localization'] = duo_unfilt.obs['Site'].astype(str) + ' ' + duo_unfilt.obs['Patient'].astype(str)
@@ -256,9 +306,9 @@ sc.tl.score_genes(adata = pat_reproc, gene_list = stem, score_name = 'Stemness')
 sc.tl.score_genes(adata = cont_reproc, gene_list = stem, score_name = 'Stemness')
 sc.tl.score_genes(adata = combo_reproc, gene_list = stem, score_name = 'Stemness')
 
-sc.tl.score_genes(adata = pat_reproc, gene_list = gastric_stem, score_name = 'Gastric Stemness')
-sc.tl.score_genes(adata = cont_reproc, gene_list = gastric_stem, score_name = 'Gastric Stemness')
-sc.tl.score_genes(adata = combo_reproc, gene_list = gastric_stem, score_name = 'Gastric Stemness')
+sc.tl.score_genes(adata = pat_reproc, gene_list = gastric_stem, score_name = 'Gastric stemness')
+sc.tl.score_genes(adata = cont_reproc, gene_list = gastric_stem, score_name = 'Gastric stemness')
+sc.tl.score_genes(adata = combo_reproc, gene_list = gastric_stem, score_name = 'Gastric stemness')
 
 plotA = sc.pl.scatter(pat_reproc, x = 'Stemness', y = 'Intestinal stemness', color = 'LGR5', show = False)
 plotB = sc.pl.scatter(cont_reproc, x = 'Stemness', y = 'Intestinal stemness', color = 'LGR5', show = False)
@@ -267,12 +317,24 @@ plotB.set_ylim(-1.25,4)
 plotA
 plotB
 
-plotC = sc.pl.scatter(pat_reproc, x = 'Stemness', y = 'Gastric stemness', color = 'LGR5', show = False)
-plotD = sc.pl.scatter(cont_reproc, x = 'Stemness', y = 'Gastric stemness', color = 'LGR5', show = False)
+plotC = sc.pl.scatter(pat_reproc, x = 'Gastric stemness', y = 'Intestinal stemness', color = 'LGR5', show = False)
+plotD = sc.pl.scatter(cont_reproc, x = 'Gastric stemness', y = 'Intestinal stemness', color = 'LGR5', show = False)
 plotC.set_ylim(-1.25,4)
 plotD.set_ylim(-1.25,4)
 plotC
 plotD
+
+plotE = sc.pl.scatter(pat_reproc, x = 'LGR5', y = 'Intestinal stemness', color = 'Gastric stemness', show = False)
+plotF = sc.pl.scatter(cont_reproc, x = 'LGR5', y = 'Intestinal stemness', color = 'Gastric stemness', show = False)
+plotE.set_ylim(-1.25,4)
+plotF.set_ylim(-1.25,4)
+plotE
+plotF
+
+end_time = time.time()
+print("Script executed in", end_time - start_time, "seconds")
+print("Script executed in", (end_time - start_time)/60, "minutes")
+#%%
 
 sc.pl.umap(pat_reproc, color = ['leiden', 'MKI67', 'LGR5', 'BMI1', 'ASCL2', 'CD44', 'SMOC2', 'SOX2', 'TNFRSF19', 'STMN1', 'OLFM4', 'BHLHA15', 'MUC6', 'TFF2', 'MUC5AC', 'GKN2', 'TFF1', 'GHRL', 'AQP5', 'MUC1'], title = 'Patient Leiden', save = 'patient antrum.png')
 sc.pl.umap(cont_reproc, color = ['leiden', 'MKI67', 'LGR5', 'BMI1', 'ASCL2', 'CD44', 'SMOC2', 'SOX2', 'TNFRSF19', 'STMN1', 'OLFM4', 'MUC6', 'TFF2', 'MUC5AC', 'GKN2', 'TFF1', 'GHRL', 'AQP5', 'MUC1'], title = 'Control Leiden', save = 'control antrum.png')
@@ -358,7 +420,8 @@ LGR5_combo = sc.concat(adatas = [LGR5contant, LGR5patant], join = 'outer')
 sc.pl.violin(adata = LGR5_combo, keys = 'LGR5', groupby = 'Localization')
 LGR5_barcode = LGR5_combo.obs_names.tolist()
 LGR5_refilt = combo_unfilt[LGR5_barcode]
-LGR5_reproc = process_for_UMAP(LGR5_refilt)
+LGR5_reproc = process_for_UMAP(LGR5_refilt, leiden_res = 0.2)
+sc.pl.umap(LGR5_reproc, color = ['Patient', 'leiden'])
 sc.pl.violin(adata = LGR5_reproc, keys = 'LGR5', groupby = 'Localization')
 sc.pl.violin(adata = combonation, keys = 'SMOC2', groupby = 'Localization')
 sc.pl.violin(adata = combonation, keys = 'OLFM4', groupby = 'Localization')
@@ -375,6 +438,43 @@ plot2
 sc.pl.umap(pat_reproc, color = inspect_stem)
 sc.pl.umap(pat_reproc, color = duodenal_markers)
 sc.pl.umap(pat_reproc, color = gastric_markers)
+
+#%%
+plt.hist(cont_reproc.obs['Intestinal stemness'], bins=50, alpha=0.5, label='Control', color='blue', density = 1)
+plt.hist(pat_reproc.obs['Intestinal stemness'], bins=50, alpha=0.5, label='Patient', color='red', density = 1)
+
+# Add titles and labels
+plt.title('Antral Epithalial Intestinal Stemness')
+plt.xlabel('Intestinal Stemness')
+plt.ylabel('Count')
+plt.xlim(-2, 3)
+plt.legend(loc='upper right')
+
+# Show plot
+plt.show()
+#%%
+plt.hist(LGR5_cont_ant.obs['Intestinal stemness'], bins=50, alpha=0.5, label='Control', color='blue')
+plt.hist(LGR5_pat_ant.obs['Intestinal stemness'], bins=50, alpha=0.5, label='Patient', color='red')
+
+# Add titles and labels
+plt.title('Antral Epithalial Intestinal Stemness')
+plt.xlabel('Intestinal Stemness')
+plt.ylabel('Count')
+plt.xlim(-2, 3)
+plt.legend(loc='upper right')
+
+# Show plot
+plt.show()
+
+
+#%%
+scatter_density_plot(data = cont_reproc, upxlim = 1, loxlim = -0.5, upylim = 4.5, loylim = -1.5, size = 10)
+scatter_density_plot(data = pat_reproc, upxlim = 1, loxlim = -0.5, upylim = 4.5, loylim = -1.5, size = 10)
+plot1 = sc.pl.scatter(pat_reproc, y = 'Intestinal stemness', x = 'Gastric stemness', color = 'LGR5', show = 0, size = 50)
+plot1.set_xlim(-0.5, 1);
+plot1.set_ylim(-1.5, 4.5);
+plot1
+
 
 #%%
 
@@ -407,6 +507,39 @@ for group in ['0', '1', '2', '3', '4', '5', '6', '7']:
 control_ant = dataframes['2']
 
 control_ant.to_csv('C:/Work cache/py_projs/scRNAseq_AGR2/project data cache/testing integration with separation and the stem cells part 2/saved files/volcano plot/control_cluster_2.csv')
+
+#%%
+
+leiden_map = {
+    '0' : 'Metaplastic antrum',
+    '1' : 'Gastric antrum'}
+
+map_to_column(data = LGR5_reproc, map_set = leiden_map, column = 'leiden')
+
+#%%
+sc.tl.rank_genes_groups(adata = LGR5_reproc, groupby = 'leiden', method = 'wilcoxon')
+ranked_genes = LGR5_reproc.uns['rank_genes_groups']
+
+# Extract the top 20 genes for the first group
+top_n = 20
+groups = ranked_genes['names'].dtype.names  # Get the cluster names
+
+group1 = groups[0]  # Get the name of the first group
+group2 = groups[1]  # Get the name of the second group
+
+top_genes_group1 = ranked_genes['names'][group1][:top_n]
+top_genes_group2 = ranked_genes['names'][group2][:top_n]
+
+# Combine the top genes in the specified order
+ordered_genes = list(top_genes_group2) + list(reversed(top_genes_group1))
+
+# Reverse the order of groups on the Y axis
+reversed_groups = list(reversed(LGR5_reproc.obs['leiden'].cat.categories))
+
+# Plot the combined top genes as a dotplot with reversed Y-axis order
+sc.pl.dotplot(LGR5_reproc, ordered_genes, groupby='leiden', standard_scale='var', categories_order=reversed_groups)
+
+
 
 #%%
 end_time = time.time()

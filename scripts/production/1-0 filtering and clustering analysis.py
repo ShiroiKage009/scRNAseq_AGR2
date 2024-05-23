@@ -169,7 +169,7 @@ sc.set_figure_params(dpi = 600)
 
 inspect_stem = ['LGR5', 'MKI67', 'TNFRSF19', 'BMI1', 'LRIG1', 'leiden', 'Localization']
 global_res = 0.5
-LGR5_threshold = 0.5
+LGR5_threshold = 0.1
 diff_exp_method = 'wilcoxon'
 
 
@@ -518,7 +518,7 @@ map_to_column(data = combined_LGR5_refilt_proc, map_set = cluster_map, column = 
 
 # For antrum
 # LGR5
-antrum_LGR5_refilt_proc = process_for_UMAP(antrum_LGR5_unfilt_subset, leiden_res = 0.3)
+antrum_LGR5_refilt_proc = process_for_UMAP(antrum_LGR5_unfilt_subset, leiden_res = 0.2)
 antrum_LGR5_refilt_proc.obs['Localization'] = antrum_LGR5_refilt_proc.obs['Site'].astype(str) + ' ' + antrum_LGR5_refilt_proc.obs['Patient'].astype(str)
 #sc.pl.umap(antrum_LGR5_refilt_proc, color = ['LGR5', 'leiden', 'Localization'], size = 150)
 # Epithelium
@@ -548,7 +548,7 @@ print("Script executed in", end_time - start_time, "seconds")
 print("Script executed in", (end_time - start_time)/60, "minutes")
 
 #%%
-#replace_with_%%_to_restore_cell_breaks Writing the files for volcano plot in R. This is specifically for antrum_LGR5_recalc
+#replace_with_%%_to_restore_cell_breaks Writing the files for volcano plot in R. This is specifically for antrum_LGR5_refilt_proc
 
 leiden_map = {
     '0' : 'Metaplastic antrum',
@@ -556,10 +556,11 @@ leiden_map = {
 
 map_to_column(data = antrum_LGR5_refilt_proc, map_set = leiden_map, column = 'leiden')
 print(antrum_LGR5_refilt_proc.obs['leiden'])
+sc.pl.umap(antrum_LGR5_refilt_proc, color = ['leiden', 'Patient'])
 # Calculate diff exp ranking
 sc.tl.rank_genes_groups(adata = antrum_LGR5_refilt_proc, groupby = 'leiden', method = 'wilcoxon')
 sc.pl.rank_genes_groups(adata = antrum_LGR5_refilt_proc)
-sc.pl.umap(antrum_LGR5_refilt_proc, color = 'leiden')
+sc.pl.dotplot(adata = antrum_LGR5_refilt_proc, groupby = 'leiden', var_names = ['LGR5', 'SMOC2'])
 sc.pl.umap(antrum_LGR5_refilt_proc, color = 'Localization')
 
 # Extract the relevant arrays
@@ -568,7 +569,7 @@ logfoldchanges = antrum_LGR5_refilt_proc.uns['rank_genes_groups']['logfoldchange
 pvals_adj = antrum_LGR5_refilt_proc.uns['rank_genes_groups']['pvals_adj']
 
 # Since you have two groups, you can loop or manually index each group
-# Assuming group names are '0' and '1', adjust accordingly
+# Extracting DGE data from the object
 
 dataframes = {}
 for group in ['Metaplastic antrum', 'Gastric antrum']:
@@ -621,3 +622,30 @@ antrum_epithelium.obs['Patient'].value_counts()
 duodenum_epithelium.obs['Patient'].value_counts()
 duo_ep_LGR5.obs['Patient'].value_counts()
 duo_ep_MKI67.obs['Patient'].value_counts()
+#%% Dotplot
+# Assuming the gene ranking has already been performed and is stored in antrum_LGR5_refilt_proc
+ranked_genes = antrum_LGR5_refilt_proc.uns['rank_genes_groups']
+
+# Extract the top 20 genes for the first group
+top_n = 20
+groups = ranked_genes['names'].dtype.names  # Get the cluster names
+
+group1 = groups[0]  # Get the name of the first group
+group2 = groups[1]  # Get the name of the second group
+
+top_genes_group1 = ranked_genes['names'][group1][:top_n]
+top_genes_group2 = ranked_genes['names'][group2][:top_n]
+
+# Combine the top genes in the specified order
+ordered_genes = list(top_genes_group2) + list(reversed(top_genes_group1))
+
+# Reverse the order of groups on the Y axis
+reversed_groups = list(reversed(antrum_LGR5_refilt_proc.obs['leiden'].cat.categories))
+
+# Plot the combined top genes as a dotplot with reversed Y-axis order
+sc.pl.dotplot(antrum_LGR5_refilt_proc, ordered_genes, groupby='leiden', standard_scale='var', categories_order=reversed_groups)
+
+#%% Additional plotting
+sc.pl.umap(antrum_LGR5_refilt_proc, color = 'leiden', size = 250)
+sc.pl.umap(antrum_LGR5_refilt_proc, color = 'Patient', size = 250)
+sc.pl.umap(combined_LGR5_refilt_proc, color = 'Localization', size = 30)

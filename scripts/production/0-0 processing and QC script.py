@@ -8,6 +8,16 @@ import pandas as pd
 import time
 
 #%% function definitions
+# Time wrapper
+def time_it(func):
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        print(f"{func.__name__} executed in {end_time - start_time} seconds")
+        return result
+    return wrapper
+
 # DEFAULT QC VALUES. Calibrated to Sarah Teichmann's paper "Cells of the human intestinal tract mapped across space and time." These QC values will apply by default for this entire script.
 def filter_cells_for_UMAP(data, min_ct = 2000, min_gen = 500, min_cell = 3, mt_pct = 60, max_genes = 0, normed = 0, d_score = 0.24): 
     adata = data # This is to avoid writing into the file that's entered as an argument
@@ -25,6 +35,7 @@ def filter_cells_for_UMAP(data, min_ct = 2000, min_gen = 500, min_cell = 3, mt_p
         adata_filt = adata_prefilt
     return adata_filt    
 
+@time_it
 def process_for_UMAP(data, leiden_res = 0.8, filtering = 1, min_ct = 2000, min_gen = 500, min_cell = 3, mt_pct = 60, max_genes = 0, normed = 0, d_score = 0.24): # DEFAULT QC VALUES
     adata = data # This is to avoid writing into the file that's entered as an argument
     if filtering:
@@ -68,7 +79,7 @@ def process_for_UMAP(data, leiden_res = 0.8, filtering = 1, min_ct = 2000, min_g
 ################## FUNCTION DEF END ###################
 #######################################################
 
-
+@time_it
 def recalc_UMAP(data_filt, leiden_res = 0.8):
     adata_filt = data_filt
     sc.tl.pca(adata_filt, svd_solver='arpack') # Compute PCA
