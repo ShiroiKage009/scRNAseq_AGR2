@@ -168,6 +168,7 @@ sc.settings.verbosity = 3
 sc.set_figure_params(dpi = 600)
 
 inspect_stem = ['LGR5', 'MKI67', 'TNFRSF19', 'BMI1', 'LRIG1', 'leiden', 'Localization']
+inspect_wnt = ['WNT1', 'WNT2', 'WNT2B', 'WNT3A', 'WNT4', 'WNT5A', 'WNT6', 'WNT9A', 'WNT9B', 'WNT10B', 'WNT11', 'WNT16B']
 global_res = 0.5
 LGR5_threshold = 0.1
 diff_exp_method = 'wilcoxon'
@@ -649,3 +650,33 @@ sc.pl.dotplot(antrum_LGR5_refilt_proc, ordered_genes, groupby='leiden', standard
 sc.pl.umap(antrum_LGR5_refilt_proc, color = 'leiden', size = 250)
 sc.pl.umap(antrum_LGR5_refilt_proc, color = 'Patient', size = 250)
 sc.pl.umap(combined_LGR5_refilt_proc, color = 'Localization', size = 30)
+
+#%% Testing wnt
+# Calculate gene ranking
+sc.tl.rank_genes_groups(adata = antrum_LGR5_refilt_proc, groupby = 'leiden', method = 'wilcoxon')
+inspect_wnt2 = ['WNT1', 'WNT2B', 'WNT3A', 'WNT4', 'WNT6', 'WNT9A', 'WNT10B', 'WNT11']
+sc.pl.umap(antrum_epithelium, color = inspect_wnt2)
+sc.pl.umap(combined_epithelium, color = inspect_wnt2)
+sc.pl.violin(adata = antrum_epithelium, keys = inspect_wnt2, groupby = 'Patient')
+sc.pl.dotplot(adata = antrum_epithelium, var_names = inspect_wnt2, groupby = 'Patient')
+sc.pl.violin(adata = antrum_epithelium, keys = 'CTNNB1', groupby = 'Patient')
+
+#%%
+
+
+
+# Extract the ranking results
+gene_rankings = antrum_LGR5_refilt_proc.uns['rank_genes_groups']
+
+# Get the top 50 genes for patients
+top_genes_patient = gene_rankings['names']['Metaplastic antrum'][:50]
+
+# Get the top 50 genes for controls
+top_genes_control = gene_rankings['names']['Gastric antrum'][:50]
+
+# Print the top 50 genes for each group
+print("Top 50 genes for patients:")
+print(top_genes_patient)
+
+print("\nTop 50 genes for controls:")
+print(top_genes_control)
