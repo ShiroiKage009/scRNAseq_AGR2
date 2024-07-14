@@ -382,11 +382,11 @@ sc.pl.scatter(cont_reproc, x = 'LGR5', y = 'OLFM4', color = 'SMOC2')
 sc.pl.scatter(pat_reproc, x = 'LGR5', y = 'OLFM4', color = 'SMOC2')
 
 combonation = sc.concat(adatas = [cont_reproc, pat_reproc], join = 'outer')
-crazy_combo = sc.concat(adatas = [cont_reproc, pat_reproc, duocont_reproc], join = 'outer')
 combonation_LGR5 = isolate_cells_by_gene(data = combonation, gene = 'LGR5', threshold = 0.1)
 sc.pl.violin(adata = combonation_LGR5, keys = 'LGR5', groupby = 'Patient')
 sc.pl.violin(adata = combonation, keys = 'LGR5', groupby = 'Patient')
 
+crazy_combo = sc.concat(adatas = [cont_reproc, pat_reproc, duocont_reproc], join = 'outer')
 crazy_combo_LGR5 = isolate_cells_by_gene(data = crazy_combo, gene = 'LGR5', threshold = 0.1)
 sc.pl.violin(adata = crazy_combo, keys = 'LGR5', groupby = 'Localization')
 sc.pl.violin(adata = crazy_combo_LGR5, keys = 'LGR5', groupby = 'Localization')

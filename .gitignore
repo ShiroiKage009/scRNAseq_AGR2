@@ -27,3 +27,10 @@ project data cache/refiltering from raw and reprocessing/duodenum_unfilt_subset.
 project data cache/testing integration with separation and the stem cells part 2/saved files/duodenum_combined.h5ad
 project data cache/testing integration with separation and the stem cells part 2/saved files/duodenum_control.h5ad
 project data cache/testing integration with separation and the stem cells part 2/saved files/duodenum_patient.h5ad
+project data cache/testing integration with separation and the stem cells part 2/saved files/cellrank_test/ant_agr2_organoid.h5ad
+project data cache/testing integration with separation and the stem cells part 2/saved files/cellrank_test/ant_cont_organoid.h5ad
+project data cache/testing integration with separation and the stem cells part 2/saved files/cellrank_test/contant_reproc.h5ad
+project data cache/testing integration with separation and the stem cells part 2/saved files/cellrank_test/duocont_reproc.h5ad
+project data cache/testing integration with separation and the stem cells part 2/saved files/cellrank_test/duopat_reproc.h5ad
+project data cache/testing integration with separation and the stem cells part 2/saved files/cellrank_test/pat_reproc.h5ad
+project data cache/testing integration with separation and the stem cells part 2/saved files/cellrank_test/patant_reproc.h5ad
